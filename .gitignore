@@ -11,4 +11,5 @@ build/
 *.vcxproj
 *.vcxproj.filters
 *.vcxproj.user
-
+*.exe
+*.obj
