@@ -1,0 +1,7 @@
+*.log
+src/
+out/
+include/
+build/
+.vs/
+.vscode/
