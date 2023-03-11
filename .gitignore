@@ -5,3 +5,10 @@ include/
 build/
 .vs/
 .vscode/
+*.bat
+*.sh
+*.sln
+*.vcxproj
+*.vcxproj.filters
+*.vcxproj.user
+
