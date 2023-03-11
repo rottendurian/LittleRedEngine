@@ -107,32 +107,60 @@ VkDescriptorSet* lreCreateDescriptorSets(VkDevice device,VkDescriptorSetLayout d
         // exit(EXIT_FAILURE);
     }
 
+
+
     return descriptorSets;
 }
 
 //this function definitely needs more support in the future (binding and array element) probably worth manually typing in future tbh
-void lreUpdateDescriptorSets(VkDevice device,VkDescriptorSet* descriptorSets,uint32_t descriptorSetsCount,LreUniformBufferObject* buffers,uint32_t bufferSize) {
-
+void lreUpdateDescriptorSets(VkDevice device,VkDescriptorSet* descriptorSets,uint32_t descriptorSetsCount,LreUniformBufferObject* buffers,uint32_t bufferSize,LreTextureImageObject textureImage) {
+    
     for (size_t i = 0; i < descriptorSetsCount; i++) {
         VkDescriptorBufferInfo bufferInfo; memset(&bufferInfo,0,sizeof(bufferInfo));
         bufferInfo.buffer = buffers[i].buffer;
         bufferInfo.offset = 0;
         bufferInfo.range = bufferSize;
 
-        VkWriteDescriptorSet descriptorWrite; memset(&descriptorWrite,0,sizeof(descriptorWrite));
-        descriptorWrite.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-        descriptorWrite.dstSet = descriptorSets[i];
-        descriptorWrite.dstBinding = 0;
-        descriptorWrite.dstArrayElement = 0;
+        VkDescriptorImageInfo imageInfo; memset(&imageInfo,0,sizeof(imageInfo));
+        imageInfo.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+        imageInfo.imageView = textureImage.view;
+        imageInfo.sampler = textureImage.sampler;
 
-        descriptorWrite.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
-        descriptorWrite.descriptorCount = 1;
+        VkWriteDescriptorSet *descriptorWrites = (VkWriteDescriptorSet*)alloca(2*sizeof(VkWriteDescriptorSet));
+        memset(descriptorWrites,0,sizeof(VkWriteDescriptorSet)*2);
 
-        descriptorWrite.pBufferInfo = &bufferInfo;
-        descriptorWrite.pImageInfo = NULL; // Optional
-        descriptorWrite.pTexelBufferView = NULL; // Optional
+        descriptorWrites[0].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+        descriptorWrites[0].dstSet = descriptorSets[i];
+        descriptorWrites[0].dstBinding = 0;
+        descriptorWrites[0].dstArrayElement = 0;
+        descriptorWrites[0].descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+        descriptorWrites[0].descriptorCount = 1;
+        descriptorWrites[0].pBufferInfo = &bufferInfo;
+        
+        descriptorWrites[1].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+        descriptorWrites[1].dstSet = descriptorSets[i];
+        descriptorWrites[1].dstBinding = 1;
+        descriptorWrites[1].dstArrayElement = 0;
+        descriptorWrites[1].descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+        descriptorWrites[1].descriptorCount = 1;
+        descriptorWrites[1].pImageInfo = &imageInfo;
 
-        vkUpdateDescriptorSets(device, 1, &descriptorWrite, 0, NULL);
+        vkUpdateDescriptorSets(device, 2, descriptorWrites, 0, NULL);
+        
+        // // VkWriteDescriptorSet descriptorWrite; memset(&descriptorWrite,0,sizeof(descriptorWrite));
+        // descriptorWrite.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+        // descriptorWrite.dstSet = descriptorSets[i];
+        // descriptorWrite.dstBinding = 0;
+        // descriptorWrite.dstArrayElement = 0;
+
+        // descriptorWrite.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+        // descriptorWrite.descriptorCount = 1;
+
+        // descriptorWrite.pBufferInfo = &bufferInfo;
+        // descriptorWrite.pImageInfo = NULL; // Optional
+        // descriptorWrite.pTexelBufferView = NULL; // Optional
+
+        // vkUpdateDescriptorSets(device, 1, &descriptorWrite, 0, NULL);
     }
 
 }
@@ -243,7 +271,7 @@ VkPipeline lreCreateGraphicsPipeline(VkDevice device,VkRenderPass renderPass,VkP
     VkPipelineVertexInputStateCreateInfo vertexInputInfo; memset(&vertexInputInfo,0,sizeof(vertexInputInfo));
     vertexInputInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO;
     vertexInputInfo.vertexBindingDescriptionCount = 1;
-    vertexInputInfo.vertexAttributeDescriptionCount = 2;
+    vertexInputInfo.vertexAttributeDescriptionCount = VERTEX_ATTRIB_COUNT;
     vertexInputInfo.pVertexBindingDescriptions = &bindingDescription;
     vertexInputInfo.pVertexAttributeDescriptions = attributeDescription;
 

@@ -8,7 +8,7 @@
 
 #include "pch.h"
 
-static const int MAX_FRAMES_IN_FLIGHT = 2;
+// static const int MAX_FRAMES_IN_FLIGHT = 2;
 
 typedef struct LreFrameBuffer {
     VkFramebuffer* frame;

@@ -21,7 +21,7 @@ VkDescriptorPool lreCreateDescriptorPool(VkDevice device,uint32_t descriptorCoun
 VkDescriptorSet* lreCreateDescriptorSets(VkDevice device,VkDescriptorSetLayout descriptorSetLayout,uint32_t descriptorCount,VkDescriptorPool descriptorPool);
 
 #include "lre_buffer.h"
-void lreUpdateDescriptorSets(VkDevice device,VkDescriptorSet* descriptorSets,uint32_t descriptorSetsCount,LreUniformBufferObject* buffers,uint32_t bufferSize);
+void lreUpdateDescriptorSets(VkDevice device,VkDescriptorSet* descriptorSets,uint32_t descriptorSetsCount,LreUniformBufferObject* buffers,uint32_t bufferSize,LreTextureImageObject textureImage);
 
 static inline void lreDestroyDescriptorSetLayout(VkDevice device,VkDescriptorSetLayout layout) {
     vkDestroyDescriptorSetLayout(device,layout,NULL);

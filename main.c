@@ -65,10 +65,10 @@ int main() {
     vulkanObject.commandPool = createCommandPool(vulkanObject);
 
     const Vertex vertices[] = {
-        {{-0.5f, -0.5f}, {1.0f, 0.0f, 0.0f}},
-        {{0.5f, -0.5f}, {0.0f, 1.0f, 0.0f}},
-        {{0.5f, 0.5f}, {0.0f, 0.0f, 1.0f}},
-        {{-0.5f, 0.5f}, {1.0f, 1.0f, 1.0f}}
+        {{-0.5f, -0.5f}, {1.0f, 0.0f, 0.0f}, {1.0f, 0.0f}},
+        {{0.5f, -0.5f}, {0.0f, 1.0f, 0.0f}, {0.0f, 0.0f}},
+        {{0.5f, 0.5f}, {0.0f, 0.0f, 1.0f}, {0.0f, 1.0f}},
+        {{-0.5f, 0.5f}, {1.0f, 1.0f, 1.0f}, {1.0f, 1.0f}}
     };
 
     const uint16_t indices[] = {
@@ -87,13 +87,13 @@ int main() {
     for (int i = 0; i < MAX_FRAMES_IN_FLIGHT; i++) {
         uniformBuffers[i] = lreCreateUniformBuffer(vulkanObject.device,vulkanObject.physicalDevice,sizeof(UniformBufferObject));
     }
-
+    LreTextureImageObject textureImage = lreCreateTextureImage2D(vulkanObject.device,vulkanObject.physicalDevice,vulkanObject.commandPool,vulkanObject.graphicsQueue,"res/textures/bluetreesforest.jpg");
 
     VkDescriptorPool descriptorPool = lreCreateDescriptorPool(vulkanObject.device,MAX_FRAMES_IN_FLIGHT,2,VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER);
     
     VkDescriptorSet* descriptorSets = lreCreateDescriptorSets(vulkanObject.device,descriptorSetLayout,MAX_FRAMES_IN_FLIGHT,descriptorPool);
 
-    lreUpdateDescriptorSets(vulkanObject.device,descriptorSets,MAX_FRAMES_IN_FLIGHT,uniformBuffers,sizeof(UniformBufferObject));
+    lreUpdateDescriptorSets(vulkanObject.device,descriptorSets,MAX_FRAMES_IN_FLIGHT,uniformBuffers,sizeof(UniformBufferObject),textureImage);
 
     vulkanObject.commandBuffer = createCommandBuffer(vulkanObject);
     vulkanObject.syncObjects = createSyncObjects(vulkanObject);
@@ -121,6 +121,7 @@ int main() {
         lreDestroyUniformBuffer(vulkanObject.device,uniformBuffers[i]);
     }
     free(uniformBuffers);
+    lreDestroyTextureImage(vulkanObject.device,textureImage);
 
     destroyCommandPool(vulkanObject);
     destroyFrameBuffer(vulkanObject);

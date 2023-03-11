@@ -18,4 +18,8 @@
     #include "memory/memlog.h"
 #endif
 
+#ifndef MAX_FRAMES_IN_FLIGHT
+    #define MAX_FRAMES_IN_FLIGHT 2
+#endif
+
 #endif

@@ -13,3 +13,4 @@ build/
 *.vcxproj.user
 *.exe
 *.obj
+git-info.txt
