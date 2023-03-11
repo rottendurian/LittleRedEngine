@@ -1,7 +1,0 @@
-# CMake generation dependency list for this directory.
-C:/Program Files/CMake/share/cmake-3.25/Modules/CPack.cmake
-C:/Program Files/CMake/share/cmake-3.25/Modules/CPackComponent.cmake
-C:/Program Files/CMake/share/cmake-3.25/Modules/GNUInstallDirs.cmake
-C:/Program Files/CMake/share/cmake-3.25/Templates/CPackConfig.cmake.in
-C:/Users/rmw07/Documents/c/vulkan/dep/cglm/CMakeLists.txt
-C:/Users/rmw07/Documents/c/vulkan/dep/cglm/cglm.pc.in
