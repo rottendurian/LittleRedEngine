@@ -1,0 +1,2 @@
+﻿lre.lib(lre_swapchain.obj) : error LNK2019: unresolved external symbol lreCleanUpSwapChain referenced in function lreReCreateSwapChain
+C:\Users\rmw07\Documents\c\vulkan\build\Debug\vulkan.exe : fatal error LNK1120: 1 unresolved externals

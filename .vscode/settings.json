@@ -1,0 +1,30 @@
+{
+    "C_Cpp.errorSquiggles": "Disabled",
+    "files.associations": {
+        "vector": "cpp",
+        "iostream": "cpp",
+        "ostream": "cpp",
+        "list": "cpp",
+        "xstring": "cpp",
+        "optional": "cpp",
+        "glfw3.h": "c",
+        "vulkan.h": "c",
+        "compare": "c",
+        "functional": "c",
+        "memory": "c",
+        "tuple": "c",
+        "type_traits": "c",
+        "utility": "c",
+        "xmemory": "c",
+        "xtr1common": "c",
+        "xutility": "c",
+        "cglm.h": "c",
+        "vec2.h": "c",
+        "vec2-ext.h": "c",
+        "common.h": "c",
+        "lre_object.h": "c",
+        "initializer_list": "c",
+        "xhash": "c",
+        "xtree": "c"
+    }
+}

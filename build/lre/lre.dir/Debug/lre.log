@@ -1,0 +1,8 @@
+﻿  lre_render.c
+C:\Users\rmw07\Documents\c\vulkan\lre\lre_swapchain.h(68,43): error C2143: syntax error: missing ')' before '*'
+C:\Users\rmw07\Documents\c\vulkan\lre\lre_swapchain.h(68,43): error C2143: syntax error: missing '{' before '*'
+C:\Users\rmw07\Documents\c\vulkan\lre\lre_swapchain.h(68,56): error C2059: syntax error: ')'
+C:\Users\rmw07\Documents\c\vulkan\lre\lre_swapchain.h(70,55): error C2143: syntax error: missing ')' before '*'
+C:\Users\rmw07\Documents\c\vulkan\lre\lre_swapchain.h(70,55): error C2143: syntax error: missing '{' before '*'
+C:\Users\rmw07\Documents\c\vulkan\lre\lre_swapchain.h(70,69): error C2059: syntax error: ')'
+C:\Users\rmw07\Documents\c\vulkan\lre\lre_swapchain.h(70,71): error C2054: expected '(' to follow 'vulkanObject'

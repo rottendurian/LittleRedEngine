@@ -1,0 +1,20 @@
+^C:\USERS\RMW07\DOCUMENTS\C\VULKAN\BUILD\CMAKEFILES\C4BB123B539F4BA0D6628ED39219F770\PCH.H.GCH.RULE
+setlocal
+"C:\Program Files\Microsoft Visual Studio\2022\Community\VC\Tools\MSVC\14.33.31629\bin\Hostx64\x64\cl.exe" pch.h
+if %errorlevel% neq 0 goto :cmEnd
+:cmEnd
+endlocal & call :cmErrorLevel %errorlevel% & goto :cmDone
+:cmErrorLevel
+exit /b %1
+:cmDone
+if %errorlevel% neq 0 goto :VCEnd
+^C:\USERS\RMW07\DOCUMENTS\C\VULKAN\LRE\CMAKELISTS.TXT
+setlocal
+"C:\Program Files\CMake\bin\cmake.exe" -SC:/Users/rmw07/Documents/c/vulkan -BC:/Users/rmw07/Documents/c/vulkan/build --check-stamp-file C:/Users/rmw07/Documents/c/vulkan/build/lre/CMakeFiles/generate.stamp
+if %errorlevel% neq 0 goto :cmEnd
+:cmEnd
+endlocal & call :cmErrorLevel %errorlevel% & goto :cmDone
+:cmErrorLevel
+exit /b %1
+:cmDone
+if %errorlevel% neq 0 goto :VCEnd

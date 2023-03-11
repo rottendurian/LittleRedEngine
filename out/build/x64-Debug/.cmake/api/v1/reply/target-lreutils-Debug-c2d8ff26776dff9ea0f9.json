@@ -1,0 +1,131 @@
+{
+	"archive" : 
+	{
+		"commandFragments" : 
+		[
+			{
+				"fragment" : "/machine:x64",
+				"role" : "flags"
+			}
+		]
+	},
+	"artifacts" : 
+	[
+		{
+			"path" : "dep/lreutils/lreutils.lib"
+		}
+	],
+	"backtrace" : 1,
+	"backtraceGraph" : 
+	{
+		"commands" : 
+		[
+			"add_library",
+			"target_link_libraries",
+			"target_include_directories",
+			"target_sources"
+		],
+		"files" : 
+		[
+			"dep/lreutils/CMakeLists.txt"
+		],
+		"nodes" : 
+		[
+			{
+				"file" : 0
+			},
+			{
+				"command" : 0,
+				"file" : 0,
+				"line" : 5,
+				"parent" : 0
+			},
+			{
+				"command" : 1,
+				"file" : 0,
+				"line" : 12,
+				"parent" : 0
+			},
+			{
+				"command" : 2,
+				"file" : 0,
+				"line" : 19,
+				"parent" : 0
+			},
+			{
+				"command" : 3,
+				"file" : 0,
+				"line" : 28,
+				"parent" : 0
+			}
+		]
+	},
+	"dependencies" : 
+	[
+		{
+			"backtrace" : 2,
+			"id" : "bst::@9511507eb168c59ad720"
+		},
+		{
+			"backtrace" : 2,
+			"id" : "rbtree::@fbfed8156d36c338d6d4"
+		},
+		{
+			"backtrace" : 2,
+			"id" : "hashtable::@1e9a5449503228e8f589"
+		},
+		{
+			"backtrace" : 2,
+			"id" : "memory::@d5c9f9789906acf4c47f"
+		}
+	],
+	"id" : "lreutils::@ab135a7d99e6bf0e014d",
+	"name" : "lreutils",
+	"nameOnDisk" : "lreutils.lib",
+	"paths" : 
+	{
+		"build" : "dep/lreutils",
+		"source" : "dep/lreutils"
+	},
+	"sourceGroups" : 
+	[
+		{
+			"name" : "Object Libraries",
+			"sourceIndexes" : 
+			[
+				0,
+				1,
+				2,
+				3
+			]
+		}
+	],
+	"sources" : 
+	[
+		{
+			"backtrace" : 4,
+			"isGenerated" : true,
+			"path" : "out/build/x64-Debug/dep/lreutils/bst/CMakeFiles/bst.dir/bst.c.obj",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 4,
+			"isGenerated" : true,
+			"path" : "out/build/x64-Debug/dep/lreutils/rbtree/CMakeFiles/rbtree.dir/rbtree.c.obj",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 4,
+			"isGenerated" : true,
+			"path" : "out/build/x64-Debug/dep/lreutils/hashtable/CMakeFiles/hashtable.dir/hashutils.c.obj",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 4,
+			"isGenerated" : true,
+			"path" : "out/build/x64-Debug/dep/lreutils/memory/CMakeFiles/memory.dir/memlog.c.obj",
+			"sourceGroupIndex" : 0
+		}
+	],
+	"type" : "STATIC_LIBRARY"
+}
