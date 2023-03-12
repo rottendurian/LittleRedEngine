@@ -159,11 +159,12 @@ LreDescriptorPool lreCreateDescriptorPool(VkDevice device,VkDescriptorSetLayout 
     va_list args;
     va_start(args,argCount);
 
-    VkDescriptorPoolSize* poolSize = (VkDescriptorPoolSize*)alloca(argCount*sizeof(VkDescriptorPoolSize)); memset(poolSize,0,sizeof(poolSize));
+    VkDescriptorPoolSize* poolSize = (VkDescriptorPoolSize*)alloca(argCount*sizeof(VkDescriptorPoolSize)); 
+    memset(poolSize,0,argCount*sizeof(VkDescriptorPoolSize));
 
     //this is sort of backwards
     VkWriteDescriptorSet *descriptorWrites = (VkWriteDescriptorSet*)alloca(descriptorCount*argCount*sizeof(VkWriteDescriptorSet));
-    memset(descriptorWrites,0,argCount*sizeof(VkWriteDescriptorSet));
+    memset(descriptorWrites,0,descriptorCount*argCount*sizeof(VkWriteDescriptorSet));
 
     for (uint32_t i = 0; i < argCount; i++) {
         VkDescriptorType type = va_arg(args,VkDescriptorType);
@@ -172,33 +173,33 @@ LreDescriptorPool lreCreateDescriptorPool(VkDevice device,VkDescriptorSetLayout 
         switch (type) {
             case VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER:
                 LreBufferObject* buffer = va_arg(args,LreBufferObject*);
-                for (uint32_t j = 0; j < descriptorCount*argCount; j+=2) {
-                    descriptorWrites[j+i].descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+                for (uint32_t j = 0; j < descriptorCount; j++) { //this is meant to be outer loop
+                    descriptorWrites[i+j*descriptorCount].descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
                     
                     VkDescriptorBufferInfo *bufferInfo = (VkDescriptorBufferInfo*)malloc(sizeof(VkDescriptorBufferInfo));
                     bufferInfo->buffer = buffer[i].buffer;
                     bufferInfo->offset = 0;
                     bufferInfo->range = buffer[i].size;
                     
-                    descriptorWrites[j+i].pBufferInfo = bufferInfo;
+                    descriptorWrites[i+j*descriptorCount].pBufferInfo = bufferInfo;
                 }
                 
                 break;
             case VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER:
                 LreTextureImageObject* textureImage =  va_arg(args,LreTextureImageObject*);
-                for(uint32_t j = 0; j < descriptorCount*argCount; j+=argCount) {
-                    descriptorWrites[j+i].descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+                for(uint32_t j = 0; j < descriptorCount; j++) {
+                    descriptorWrites[i+j*descriptorCount].descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
                     
                     VkDescriptorImageInfo* imageInfo = (VkDescriptorImageInfo*)malloc(sizeof(VkDescriptorImageInfo));
                     imageInfo->imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
                     imageInfo->imageView = textureImage->view;
                     imageInfo->sampler = textureImage->sampler;
 
-                    descriptorWrites[j+i].pImageInfo = imageInfo;
+                    descriptorWrites[i+j*descriptorCount].pImageInfo = imageInfo;
                 }
                 break;
             default:
-                LOGTOFILE(LOG_LEVEL_ERROR,"Descriptor type not supported!\n");
+                LOGTOFILE(LOG_LEVEL_ERROR,"Descriptor type not supported!");
                 break;
         }
     }
@@ -235,20 +236,20 @@ LreDescriptorPool lreCreateDescriptorPool(VkDevice device,VkDescriptorSetLayout 
     }
 
 
-    for (uint32_t i = 0; i < descriptorCount; i+=argCount) {
+    for (uint32_t i = 0; i < descriptorCount; i++) {
         for (uint32_t j = 0; j < argCount; j++) {
-            descriptorWrites[i+j].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-            descriptorWrites[i+j].dstSet = lrePool.descriptorSets[i];
-            descriptorWrites[i+j].dstBinding = j;
-            descriptorWrites[i+j].dstArrayElement = 0;
-            descriptorWrites[i+j].descriptorCount = 1;
-            descriptorWrites[i+j].pTexelBufferView = NULL;
+            descriptorWrites[i*descriptorCount+j].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+            descriptorWrites[i*descriptorCount+j].dstSet = lrePool.descriptorSets[i];
+            descriptorWrites[i*descriptorCount+j].dstBinding = j;
+            descriptorWrites[i*descriptorCount+j].dstArrayElement = 0;
+            descriptorWrites[i*descriptorCount+j].descriptorCount = 1;
+            descriptorWrites[i*descriptorCount+j].pTexelBufferView = NULL;
         }
-        vkUpdateDescriptorSets(device, argCount, descriptorWrites+i, 0, NULL);
+        vkUpdateDescriptorSets(device, argCount, &descriptorWrites[i*descriptorCount], 0, NULL);
 
         for (uint32_t j = 0; j < argCount; j++) {
-            free((void*)descriptorWrites[i+j].pBufferInfo);
-            free((void*)descriptorWrites[i+j].pImageInfo);
+            free((void*)descriptorWrites[i*descriptorCount+j].pBufferInfo);
+            free((void*)descriptorWrites[i*descriptorCount+j].pImageInfo);
         }
     }
 
