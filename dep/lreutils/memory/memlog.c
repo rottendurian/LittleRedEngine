@@ -30,7 +30,7 @@ static hashset_size_t* table;
 
 void log_setup() {
     are_logs_setup = 1;
-    LOGSELECTFILE("memlog.log");
+    // LOGSELECTFILE("memlog.log");
     table = hashset_size_t_create();
 }
 
@@ -84,7 +84,7 @@ void log_cleanup() {
     // fprintf(stderr,"Max collisions %llu\n",table->max_col);
 
     hashset_size_t_cleanup(table);
-    LOGCLOSEFILE;
+    // LOGCLOSEFILE;
 }
 
 #endif

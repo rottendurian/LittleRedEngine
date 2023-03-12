@@ -329,11 +329,11 @@ VkPipelineLayout lreCreateGraphicsPipelineLayout(VkDevice device,VkDescriptorSet
     return pipelineLayout;
 }
 
-#include "lre_vertex.h"
+// #include "lre_vertex.h"
 
-VkPipeline lreCreateGraphicsPipeline(VkDevice device,VkRenderPass renderPass,VkPipelineLayout pipelineLayout) {
-    ShaderCode vertex = readShader("res/shaders/simple_shader.vert.spv"); 
-    ShaderCode frag = readShader("res/shaders/simple_shader.frag.spv");
+VkPipeline lreCreateGraphicsPipeline(VkDevice device,VkRenderPass renderPass,VkPipelineLayout pipelineLayout,LreVertexInputDescriptions* vertexInputDescriptions,const char* vertexFile,const char* fragFile) {
+    ShaderCode vertex = readShader(vertexFile); 
+    ShaderCode frag = readShader(fragFile);
 
     VkShaderModule vertModule = createShaderModule(device,vertex);
     VkShaderModule fragModule = createShaderModule(device,frag); 
@@ -354,15 +354,15 @@ VkPipeline lreCreateGraphicsPipeline(VkDevice device,VkRenderPass renderPass,VkP
 
     VkPipelineShaderStageCreateInfo shaderStages[] = {vertShaderStageInfo, fragShaderStageInfo};
 
-    VkVertexInputBindingDescription bindingDescription = VertexGetBindingDescription();
-    VkVertexInputAttributeDescription* attributeDescription = VertexGetAttributeDescriptions(); //2
+    // VkVertexInputBindingDescription bindingDescription = VertexGetBindingDescription();
+    // VkVertexInputAttributeDescription* attributeDescription = VertexGetAttributeDescriptions(); //2
 
     VkPipelineVertexInputStateCreateInfo vertexInputInfo; memset(&vertexInputInfo,0,sizeof(vertexInputInfo));
     vertexInputInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO;
-    vertexInputInfo.vertexBindingDescriptionCount = 1;
-    vertexInputInfo.vertexAttributeDescriptionCount = VERTEX_ATTRIB_COUNT;
-    vertexInputInfo.pVertexBindingDescriptions = &bindingDescription;
-    vertexInputInfo.pVertexAttributeDescriptions = attributeDescription;
+    vertexInputInfo.vertexBindingDescriptionCount = vertexInputDescriptions->bindingDescriptionCount;
+    vertexInputInfo.vertexAttributeDescriptionCount = vertexInputDescriptions->attributeDescriptionCount;
+    vertexInputInfo.pVertexBindingDescriptions = vertexInputDescriptions->bindingDescriptions;
+    vertexInputInfo.pVertexAttributeDescriptions = vertexInputDescriptions->attributeDescriptions;
 
     VkPipelineInputAssemblyStateCreateInfo inputAssembly; memset(&inputAssembly,0,sizeof(inputAssembly));
     inputAssembly.sType = VK_STRUCTURE_TYPE_PIPELINE_INPUT_ASSEMBLY_STATE_CREATE_INFO;
@@ -447,7 +447,6 @@ VkPipeline lreCreateGraphicsPipeline(VkDevice device,VkRenderPass renderPass,VkP
 
     vkDestroyShaderModule(device, fragModule, NULL);
     vkDestroyShaderModule(device, vertModule, NULL);
-    free(attributeDescription);
 
     return graphicsPipeline;
 }

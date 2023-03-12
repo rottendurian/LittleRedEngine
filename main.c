@@ -57,7 +57,16 @@ int main() {
     VkDescriptorSetLayout descriptorSetLayout = lreCreateDescriptorSetLayout(vulkanObject.device,bindings,2);
     
     vulkanObject.pipelineLayout = lreCreateGraphicsPipelineLayout(vulkanObject.device,&descriptorSetLayout,1);
-    vulkanObject.graphicsPipeline = createGraphicsPipeline(vulkanObject);
+
+    LreVertexInputDescriptions vertexInputDescriptions;
+    vertexInputDescriptions.bindingDescriptions = VertexGetBindingDescription();
+    vertexInputDescriptions.bindingDescriptionCount = 1;
+    vertexInputDescriptions.attributeDescriptions = VertexGetAttributeDescriptions();
+    vertexInputDescriptions.attributeDescriptionCount = VERTEX_ATTRIB_COUNT;
+
+    vulkanObject.graphicsPipeline = lreCreateGraphicsPipeline(vulkanObject.device,vulkanObject.renderPass,vulkanObject.pipelineLayout,&vertexInputDescriptions,"res/shaders/simple_shader.vert.spv","res/shaders/simple_shader.frag.spv");
+
+    lreDestroyVertexInputDescriptions(&vertexInputDescriptions);
 
     vulkanObject.frameBuffer = createFrameBuffer(vulkanObject);
     vulkanObject.commandPool = createCommandPool(vulkanObject);

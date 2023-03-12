@@ -12,17 +12,19 @@ typedef struct Vertex {
     vec2 texCoord;
 } Vertex;
 
-static VkVertexInputBindingDescription VertexGetBindingDescription() {
-    VkVertexInputBindingDescription bindingDescription; memset(&bindingDescription,0,sizeof(bindingDescription));
-    bindingDescription.binding = 0;
-    bindingDescription.stride = sizeof(Vertex);
-    bindingDescription.inputRate = VK_VERTEX_INPUT_RATE_VERTEX;
+static VkVertexInputBindingDescription* VertexGetBindingDescription() {
+    VkVertexInputBindingDescription* bindingDescription = (VkVertexInputBindingDescription*)malloc(sizeof(VkVertexInputBindingDescription)); 
+    memset(bindingDescription,0,sizeof(VkVertexInputBindingDescription));
+    bindingDescription->binding = 0;
+    bindingDescription->stride = sizeof(Vertex);
+    bindingDescription->inputRate = VK_VERTEX_INPUT_RATE_VERTEX;
     return bindingDescription;
 }
 
 //REMEMBER TO FREEEE
 static VkVertexInputAttributeDescription* VertexGetAttributeDescriptions() {
-    VkVertexInputAttributeDescription* attributeDescriptions = (VkVertexInputAttributeDescription*)malloc(sizeof(VkVertexInputAttributeDescription)*VERTEX_ATTRIB_COUNT); memset(attributeDescriptions,0,sizeof(VkVertexInputAttributeDescription)*VERTEX_ATTRIB_COUNT);
+    VkVertexInputAttributeDescription* attributeDescriptions = (VkVertexInputAttributeDescription*)malloc(sizeof(VkVertexInputAttributeDescription)*VERTEX_ATTRIB_COUNT);
+    memset(attributeDescriptions,0,sizeof(VkVertexInputAttributeDescription)*VERTEX_ATTRIB_COUNT);
 
     attributeDescriptions[0].binding = 0;
     attributeDescriptions[0].location = 0;
