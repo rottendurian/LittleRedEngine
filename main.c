@@ -25,8 +25,7 @@ int main() {
     LOGSELECTFILE("stderr.log");
 
     lreVulkanObject vulkanObject;
-    vulkanObject.window = createWindow(50,50,"hello world"); 
-    
+    vulkanObject.window = createWindow(50,50,"hello world");     
     vulkanObject.instance = createInstance("[LRE] Little Red Engine",VK_MAKE_VERSION(1,0,0),"application",VK_MAKE_VERSION(1,0,0));
     vulkanObject.debugger = createDebugMessenger(vulkanObject);
     
@@ -39,7 +38,6 @@ int main() {
     
     vulkanObject.lreSwapChain = createSwapChain(vulkanObject);
     vulkanObject.lreSwapChainImages = createImageViews(vulkanObject);
-
     vulkanObject.renderPass = createRenderPass(vulkanObject);
 
 
@@ -89,11 +87,7 @@ int main() {
     }
     LreTextureImageObject textureImage = lreCreateTextureImage2D(vulkanObject.device,vulkanObject.physicalDevice,vulkanObject.commandPool,vulkanObject.graphicsQueue,"res/textures/bluetreesforest.jpg");
 
-    VkDescriptorPool descriptorPool = lreCreateDescriptorPool(vulkanObject.device,MAX_FRAMES_IN_FLIGHT,2,VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER);
-    
-    VkDescriptorSet* descriptorSets = lreCreateDescriptorSets(vulkanObject.device,descriptorSetLayout,MAX_FRAMES_IN_FLIGHT,descriptorPool);
-
-    lreUpdateDescriptorSets(vulkanObject.device,descriptorSets,MAX_FRAMES_IN_FLIGHT,uniformBuffers,sizeof(UniformBufferObject),textureImage);
+    LreDescriptorPool descriptorPool = lreCreateDescriptorPool(vulkanObject.device,descriptorSetLayout,MAX_FRAMES_IN_FLIGHT,2,VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,uniformBuffers,VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER,&textureImage);
 
     vulkanObject.commandBuffer = createCommandBuffer(vulkanObject);
     vulkanObject.syncObjects = createSyncObjects(vulkanObject);
@@ -105,7 +99,7 @@ int main() {
     while (!lreWindowShouldClose(&vulkanObject.window)) {
         glfwPollEvents();
         updateUBOs(&vulkanObject,uniformBuffers,currentFrame);
-        lreDrawFrame(&vulkanObject,currentFrame,vertexBuffer.buffer,indexBuffer.buffer,descriptorSets);
+        lreDrawFrame(&vulkanObject,currentFrame,vertexBuffer.buffer,indexBuffer.buffer,descriptorPool.descriptorSets);
         currentFrame = (currentFrame + 1) % MAX_FRAMES_IN_FLIGHT;
     }
     vkDeviceWaitIdle(vulkanObject.device);
@@ -113,7 +107,7 @@ int main() {
     destroySyncObjects(vulkanObject);
     destroyCommandBuffers(vulkanObject);
 
-    lreDestroyDescriptorPool(vulkanObject.device,descriptorPool,descriptorSets);
+    lreDestroyDescriptorPool(vulkanObject.device,descriptorPool);
 
     lreDestroyBuffer(vulkanObject.device,vertexBuffer);
     lreDestroyBuffer(vulkanObject.device,indexBuffer);

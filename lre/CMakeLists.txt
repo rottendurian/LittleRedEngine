@@ -7,6 +7,7 @@ add_library(lre
     lre_pipeline.c
     lre_render.c
     lre_buffer.c
+
 )
 
 target_include_directories(lre

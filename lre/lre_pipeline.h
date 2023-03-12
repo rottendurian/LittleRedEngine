@@ -16,19 +16,27 @@ typedef struct LreFixedFunctions {
     VkPipelineColorBlendStateCreateInfo colorBlending;
 } LreFixedFunctions;
 
+typedef struct LreDescriptorPool {
+    VkDescriptorSetLayout descriptorSetLayout;
+    VkDescriptorPool descriptorPool;
+    VkDescriptorSet* descriptorSets;
+} LreDescriptorPool;
+
+
 VkDescriptorSetLayout lreCreateDescriptorSetLayout(VkDevice device,VkDescriptorSetLayoutBinding* bindings,uint32_t bindingCount);
-VkDescriptorPool lreCreateDescriptorPool(VkDevice device,uint32_t descriptorCount,uint32_t size,...);
-VkDescriptorSet* lreCreateDescriptorSets(VkDevice device,VkDescriptorSetLayout descriptorSetLayout,uint32_t descriptorCount,VkDescriptorPool descriptorPool);
+// VkDescriptorPool _lreCreateDescriptorPool(VkDevice device,uint32_t descriptorCount,uint32_t argCount,...);
+// VkDescriptorSet* _lreCreateDescriptorSets(VkDevice device,VkDescriptorPool descriptorPool,VkDescriptorSetLayout descriptorSetLayout,uint32_t descriptorCount);
+LreDescriptorPool lreCreateDescriptorPool(VkDevice device,VkDescriptorSetLayout descriptorSetLayout,uint32_t descriptorCount,uint32_t argCount,...);
 
 #include "lre_buffer.h"
-void lreUpdateDescriptorSets(VkDevice device,VkDescriptorSet* descriptorSets,uint32_t descriptorSetsCount,LreUniformBufferObject* buffers,uint32_t bufferSize,LreTextureImageObject textureImage);
+// void lreUpdateDescriptorSets(VkDevice device,VkDescriptorSet* descriptorSets,uint32_t descriptorSetsCount,LreUniformBufferObject* buffers,uint32_t bufferSize,LreTextureImageObject textureImage);
 
 static inline void lreDestroyDescriptorSetLayout(VkDevice device,VkDescriptorSetLayout layout) {
     vkDestroyDescriptorSetLayout(device,layout,NULL);
 }
-static inline void lreDestroyDescriptorPool(VkDevice device,VkDescriptorPool pool,VkDescriptorSet* descriptorSets) {
-    vkDestroyDescriptorPool(device,pool,NULL);
-    free(descriptorSets);
+static inline void lreDestroyDescriptorPool(VkDevice device,LreDescriptorPool pool) {
+    vkDestroyDescriptorPool(device,pool.descriptorPool,NULL);
+    free(pool.descriptorSets);
 }
 
 VkRenderPass lreCreateRenderPass(VkDevice device,VkFormat swapChainImageFormat);

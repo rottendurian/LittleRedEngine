@@ -6,11 +6,13 @@
 typedef struct LreBufferObject {
     VkBuffer buffer;
     VkDeviceMemory memory;
+    VkDeviceSize size;
 } LreBufferObject;
 
 typedef struct LreUniformBufferObject {
     VkBuffer buffer;
     VkDeviceMemory memory;
+    VkDeviceSize size;
     void* map;
 } LreUniformBufferObject;
 

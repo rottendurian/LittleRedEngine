@@ -27,6 +27,7 @@ LreUniformBufferObject lreCreateUniformBuffer(VkDevice device,VkPhysicalDevice p
     LreUniformBufferObject uniform;
     uniform.buffer = buffer.buffer;
     uniform.memory = buffer.memory;
+    uniform.size = buffer.size;
 #ifdef NDEBUG
     vkMapMemory(device,uniform.memory,0,size,0,&uniform.map);
 #else
@@ -72,7 +73,7 @@ LreBufferObject lreCreateBuffer(VkDevice device, VkPhysicalDevice physicalDevice
 
     vkBindBufferMemory(device, buffer, bufferMemory, 0);
 
-    return (LreBufferObject){buffer,bufferMemory};
+    return (LreBufferObject){buffer,bufferMemory,size};
 }
 
 void lreCopyBuffer(VkDevice device,VkCommandPool commandPool,VkQueue graphicsQueue,VkBuffer src, VkBuffer dst,VkDeviceSize size) {

@@ -60,12 +60,12 @@ VkDescriptorSetLayout lreCreateDescriptorSetLayout(VkDevice device,VkDescriptorS
     return descriptorSetLayout;
 }
 
-VkDescriptorPool lreCreateDescriptorPool(VkDevice device,uint32_t descriptorCount,uint32_t size,...) {
+VkDescriptorPool _lreCreateDescriptorPool(VkDevice device,uint32_t descriptorCount,uint32_t argCount,...) {
     va_list args;
-    va_start(args,size);
+    va_start(args,argCount);
     
-    VkDescriptorPoolSize* poolSize = (VkDescriptorPoolSize*)alloca(size*sizeof(VkDescriptorPoolSize)); memset(poolSize,0,sizeof(poolSize));
-    for (int i = 0; i < size; i++) {
+    VkDescriptorPoolSize* poolSize = (VkDescriptorPoolSize*)alloca(argCount*sizeof(VkDescriptorPoolSize)); memset(poolSize,0,sizeof(poolSize));
+    for (int i = 0; i < argCount; i++) {
         poolSize[i].type = va_arg(args,VkDescriptorType);
         poolSize[i].descriptorCount = descriptorCount;
     }
@@ -74,7 +74,7 @@ VkDescriptorPool lreCreateDescriptorPool(VkDevice device,uint32_t descriptorCoun
 
     VkDescriptorPoolCreateInfo poolInfo; memset(&poolInfo,0,sizeof(poolInfo));
     poolInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
-    poolInfo.poolSizeCount = size;
+    poolInfo.poolSizeCount = argCount;
     poolInfo.pPoolSizes = poolSize;
     poolInfo.maxSets = descriptorCount;
 
@@ -87,7 +87,7 @@ VkDescriptorPool lreCreateDescriptorPool(VkDevice device,uint32_t descriptorCoun
     return descriptorPool;
 }
 
-VkDescriptorSet* lreCreateDescriptorSets(VkDevice device,VkDescriptorSetLayout descriptorSetLayout,uint32_t descriptorCount,VkDescriptorPool descriptorPool) {
+VkDescriptorSet* _lreCreateDescriptorSets(VkDevice device,VkDescriptorPool descriptorPool,VkDescriptorSetLayout descriptorSetLayout,uint32_t descriptorCount) {
     VkDescriptorSetLayout* layouts = (VkDescriptorSetLayout*)alloca(descriptorCount*sizeof(VkDescriptorSetLayout));
     for (int i = 0; i < descriptorCount; i++) {
         layouts[i] = descriptorSetLayout;
@@ -113,7 +113,7 @@ VkDescriptorSet* lreCreateDescriptorSets(VkDevice device,VkDescriptorSetLayout d
 }
 
 //this function definitely needs more support in the future (binding and array element) probably worth manually typing in future tbh
-void lreUpdateDescriptorSets(VkDevice device,VkDescriptorSet* descriptorSets,uint32_t descriptorSetsCount,LreUniformBufferObject* buffers,uint32_t bufferSize,LreTextureImageObject textureImage) {
+void _lreUpdateDescriptorSets(VkDevice device,VkDescriptorSet* descriptorSets,uint32_t descriptorSetsCount,LreUniformBufferObject* buffers,uint32_t bufferSize,LreTextureImageObject textureImage) {
     
     for (size_t i = 0; i < descriptorSetsCount; i++) {
         VkDescriptorBufferInfo bufferInfo; memset(&bufferInfo,0,sizeof(bufferInfo));
@@ -147,24 +147,113 @@ void lreUpdateDescriptorSets(VkDevice device,VkDescriptorSet* descriptorSets,uin
 
         vkUpdateDescriptorSets(device, 2, descriptorWrites, 0, NULL);
         
-        // // VkWriteDescriptorSet descriptorWrite; memset(&descriptorWrite,0,sizeof(descriptorWrite));
-        // descriptorWrite.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-        // descriptorWrite.dstSet = descriptorSets[i];
-        // descriptorWrite.dstBinding = 0;
-        // descriptorWrite.dstArrayElement = 0;
-
-        // descriptorWrite.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
-        // descriptorWrite.descriptorCount = 1;
-
-        // descriptorWrite.pBufferInfo = &bufferInfo;
-        // descriptorWrite.pImageInfo = NULL; // Optional
-        // descriptorWrite.pTexelBufferView = NULL; // Optional
-
-        // vkUpdateDescriptorSets(device, 1, &descriptorWrite, 0, NULL);
     }
 
 }
+//VkDescriptorType, &(buffer or image)
+LreDescriptorPool lreCreateDescriptorPool(VkDevice device,VkDescriptorSetLayout descriptorSetLayout,uint32_t descriptorCount,uint32_t argCount,...) {
+    LreDescriptorPool lrePool;
+    
+    lrePool.descriptorSetLayout = descriptorSetLayout;
 
+    va_list args;
+    va_start(args,argCount);
+
+    VkDescriptorPoolSize* poolSize = (VkDescriptorPoolSize*)alloca(argCount*sizeof(VkDescriptorPoolSize)); memset(poolSize,0,sizeof(poolSize));
+
+    //this is sort of backwards
+    VkWriteDescriptorSet *descriptorWrites = (VkWriteDescriptorSet*)alloca(descriptorCount*argCount*sizeof(VkWriteDescriptorSet));
+    memset(descriptorWrites,0,argCount*sizeof(VkWriteDescriptorSet));
+
+    for (uint32_t i = 0; i < argCount; i++) {
+        VkDescriptorType type = va_arg(args,VkDescriptorType);
+        poolSize[i].type = type;
+        poolSize[i].descriptorCount = descriptorCount;
+        switch (type) {
+            case VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER:
+                LreBufferObject* buffer = va_arg(args,LreBufferObject*);
+                for (uint32_t j = 0; j < descriptorCount*argCount; j+=2) {
+                    descriptorWrites[j+i].descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+                    
+                    VkDescriptorBufferInfo *bufferInfo = (VkDescriptorBufferInfo*)malloc(sizeof(VkDescriptorBufferInfo));
+                    bufferInfo->buffer = buffer[i].buffer;
+                    bufferInfo->offset = 0;
+                    bufferInfo->range = buffer[i].size;
+                    
+                    descriptorWrites[j+i].pBufferInfo = bufferInfo;
+                }
+                
+                break;
+            case VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER:
+                LreTextureImageObject* textureImage =  va_arg(args,LreTextureImageObject*);
+                for(uint32_t j = 0; j < descriptorCount*argCount; j+=argCount) {
+                    descriptorWrites[j+i].descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+                    
+                    VkDescriptorImageInfo* imageInfo = (VkDescriptorImageInfo*)malloc(sizeof(VkDescriptorImageInfo));
+                    imageInfo->imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+                    imageInfo->imageView = textureImage->view;
+                    imageInfo->sampler = textureImage->sampler;
+
+                    descriptorWrites[j+i].pImageInfo = imageInfo;
+                }
+                break;
+            default:
+                LOGTOFILE(LOG_LEVEL_ERROR,"Descriptor type not supported!\n");
+                break;
+        }
+    }
+
+    va_end(args);
+
+    VkDescriptorPoolCreateInfo poolInfo; memset(&poolInfo,0,sizeof(poolInfo));
+    poolInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
+    poolInfo.poolSizeCount = argCount;
+    poolInfo.pPoolSizes = poolSize;
+    poolInfo.maxSets = descriptorCount;
+
+    if (vkCreateDescriptorPool(device, &poolInfo, NULL, &lrePool.descriptorPool) != VK_SUCCESS) {
+        LOGTOFILE(LOG_LEVEL_ERROR,"Failed to create descriptor pool!\n");
+    }
+
+
+    //setup descriptor sets
+    VkDescriptorSetLayout* layouts = (VkDescriptorSetLayout*)alloca(descriptorCount*sizeof(VkDescriptorSetLayout));
+    for (int i = 0; i < descriptorCount; i++) {
+        layouts[i] = lrePool.descriptorSetLayout;
+    }
+
+    VkDescriptorSetAllocateInfo allocInfo; memset(&allocInfo,0,sizeof(allocInfo));
+    allocInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
+    allocInfo.descriptorPool = lrePool.descriptorPool;
+    allocInfo.descriptorSetCount = descriptorCount;
+    allocInfo.pSetLayouts = layouts;
+
+    lrePool.descriptorSets = (VkDescriptorSet*)malloc(descriptorCount*sizeof(VkDescriptorSet));
+
+    if (vkAllocateDescriptorSets(device, &allocInfo, lrePool.descriptorSets) != VK_SUCCESS) {
+        LOGTOFILE(LOG_LEVEL_ERROR,"failed to allocate descriptor sets!");
+    }
+
+
+    for (uint32_t i = 0; i < descriptorCount; i+=argCount) {
+        for (uint32_t j = 0; j < argCount; j++) {
+            descriptorWrites[i+j].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+            descriptorWrites[i+j].dstSet = lrePool.descriptorSets[i];
+            descriptorWrites[i+j].dstBinding = j;
+            descriptorWrites[i+j].dstArrayElement = 0;
+            descriptorWrites[i+j].descriptorCount = 1;
+            descriptorWrites[i+j].pTexelBufferView = NULL;
+        }
+        vkUpdateDescriptorSets(device, argCount, descriptorWrites+i, 0, NULL);
+
+        for (uint32_t j = 0; j < argCount; j++) {
+            free((void*)descriptorWrites[i+j].pBufferInfo);
+            free((void*)descriptorWrites[i+j].pImageInfo);
+        }
+    }
+
+    return lrePool;
+}
 
 
 VkRenderPass lreCreateRenderPass(VkDevice device,VkFormat swapChainImageFormat) {
