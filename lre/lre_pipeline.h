@@ -4,17 +4,17 @@
 #include "pch.h"
 #include "lre_buffer.h"
 
-typedef struct LreFixedFunctions {
-    VkPipelineDynamicStateCreateInfo dynamicState;
-    VkPipelineVertexInputStateCreateInfo vertexInputInfo;
-    VkPipelineInputAssemblyStateCreateInfo inputAssembly;
-    VkViewport viewport;
-    VkRect2D scissor;
-    VkPipelineRasterizationStateCreateInfo rasterizer;
-    VkPipelineMultisampleStateCreateInfo multisampling;
-    VkPipelineColorBlendAttachmentState colorBlendAttachment;
-    VkPipelineColorBlendStateCreateInfo colorBlending;
-} LreFixedFunctions;
+// typedef struct LreFixedFunctions {
+//     VkPipelineDynamicStateCreateInfo dynamicState;
+//     VkPipelineVertexInputStateCreateInfo vertexInputInfo;
+//     VkPipelineInputAssemblyStateCreateInfo inputAssembly;
+//     VkViewport viewport;
+//     VkRect2D scissor;
+//     VkPipelineRasterizationStateCreateInfo rasterizer;
+//     VkPipelineMultisampleStateCreateInfo multisampling;
+//     VkPipelineColorBlendAttachmentState colorBlendAttachment;
+//     VkPipelineColorBlendStateCreateInfo colorBlending;
+// } LreFixedFunctions;
 
 typedef struct LreDescriptorPool {
     VkDescriptorSetLayout descriptorSetLayout;

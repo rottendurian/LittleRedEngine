@@ -156,8 +156,6 @@ void lreRecordDrawCommandBuffer(lreVulkanObject* vulkanObject,uint32_t imageInde
 
     if (vkEndCommandBuffer(vulkanObject->commandBuffer[currentFrame]) != VK_SUCCESS) {
         LOGTOFILE(LOG_LEVEL_ERROR,"Failed to record command buffer!");
-        // fprintf(stderr,"Failed to record command buffer!");
-        // exit(EXIT_FAILURE);
     }
 }
 
@@ -180,8 +178,6 @@ LreSynchronization lreCreateSyncObjects(VkDevice device) {
             vkCreateFence(device, &fenceInfo, NULL, &syncObjects.inFlightFences[i]) != VK_SUCCESS) 
         {
             LOGTOFILE(LOG_LEVEL_ERROR,"Failed to create semaphores!");
-            // fprintf(stderr,"Failed to create semaphores!");
-            // exit(EXIT_FAILURE);
         }
 
     }
