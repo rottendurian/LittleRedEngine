@@ -21,7 +21,7 @@ LreVulkanContext* LreGenerateVulkanContext(uint32_t windowWidth, uint32_t window
     vulkanContext->vulkanObject.lreSwapChainImages = createImageViews(vulkanObject);
     vulkanContext->vulkanObject.renderPass = createRenderPass(vulkanObject);
 
-    return lreVulkanContext;
+    return vulkanContext;
 
 }
 

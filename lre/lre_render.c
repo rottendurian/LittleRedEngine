@@ -100,7 +100,7 @@ VkCommandBuffer* lreCreateDrawCommandBuffer(VkDevice device,VkCommandPool comman
     return commandBuffer;
 }
 
-void lreRecordDrawCommandBuffer(lreVulkanObject* vulkanObject,uint32_t imageIndex,uint32_t currentFrame,VkBuffer vertexBuffer,VkBuffer indexBuffer,VkDescriptorSet* descriptorSets) {
+void lreRecordDrawCommandBuffer(lreVulkanObject* vulkanObject,uint32_t imageIndex,uint32_t currentFrame,LreDrawInfo* drawInfo) {
     VkCommandBufferBeginInfo beginInfo; memset(&beginInfo,0,sizeof(beginInfo));
     beginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
     beginInfo.flags = 0; // Optional
@@ -142,14 +142,19 @@ void lreRecordDrawCommandBuffer(lreVulkanObject* vulkanObject,uint32_t imageInde
     scissor.extent = vulkanObject->lreSwapChain.extent; 
     vkCmdSetScissor(vulkanObject->commandBuffer[currentFrame], 0, 1, &scissor);
 
-    VkBuffer vertexBuffers[] = {vertexBuffer};
-    VkDeviceSize offsets[] = {0};
-    vkCmdBindVertexBuffers(vulkanObject->commandBuffer[currentFrame], 0, 1, vertexBuffers, offsets);
-    vkCmdBindIndexBuffer(vulkanObject->commandBuffer[currentFrame],indexBuffer,0,VK_INDEX_TYPE_UINT16);
+    
+    vkCmdBindVertexBuffers(vulkanObject->commandBuffer[currentFrame], drawInfo->bufferStartIndex, drawInfo->bufferCount,drawInfo->vertexBuffers,drawInfo->bufferOffsets);
+    vkCmdBindIndexBuffer(vulkanObject->commandBuffer[currentFrame],drawInfo->indexBuffer,drawInfo->indexOffset,drawInfo->indexType);
+    vkCmdBindDescriptorSets(vulkanObject->commandBuffer[currentFrame], VK_PIPELINE_BIND_POINT_GRAPHICS, vulkanObject->pipelineLayout, drawInfo->descriptorStartSet, drawInfo->descriptorCount, drawInfo->descriptorSets, 0, NULL);
 
-    vkCmdBindDescriptorSets(vulkanObject->commandBuffer[currentFrame], VK_PIPELINE_BIND_POINT_GRAPHICS, vulkanObject->pipelineLayout, 0, 1, descriptorSets, 0, NULL);
+    // VkBuffer vertexBuffers[] = {vertexBuffer};
+    // VkDeviceSize offsets[] = {0};
+    
+    // vkCmdBindVertexBuffers(vulkanObject->commandBuffer[currentFrame], 0, 1, vertexBuffers, offsets);
+    // vkCmdBindIndexBuffer(vulkanObject->commandBuffer[currentFrame],indexBuffer,0,VK_INDEX_TYPE_UINT16);
+    // vkCmdBindDescriptorSets(vulkanObject->commandBuffer[currentFrame], VK_PIPELINE_BIND_POINT_GRAPHICS, vulkanObject->pipelineLayout, 0, 1, descriptorSets, 0, NULL);
 
-    vkCmdDrawIndexed(vulkanObject->commandBuffer[currentFrame], 6, 1, 0, 0,0);
+    vkCmdDrawIndexed(vulkanObject->commandBuffer[currentFrame], drawInfo->indexCount, 1, 0, 0,0);
 
 
     vkCmdEndRenderPass(vulkanObject->commandBuffer[currentFrame]);
@@ -185,7 +190,7 @@ LreSynchronization lreCreateSyncObjects(VkDevice device) {
     return syncObjects;
 }
 
-void lreDrawFrame(lreVulkanObject *vulkanObject,uint32_t currentFrame,VkBuffer vertexBuffer,VkBuffer indexBuffer,VkDescriptorSet* descriptorSets) {
+void lreDrawFrame(lreVulkanObject *vulkanObject,uint32_t currentFrame,LreDrawInfo* drawInfo) {
     vkWaitForFences(vulkanObject->device, 1, &vulkanObject->syncObjects.inFlightFences[currentFrame], VK_TRUE, UINT64_MAX);
 
     uint32_t imageIndex;
@@ -204,7 +209,7 @@ void lreDrawFrame(lreVulkanObject *vulkanObject,uint32_t currentFrame,VkBuffer v
 
     vkResetCommandBuffer(vulkanObject->commandBuffer[currentFrame], 0);
 
-    lreRecordDrawCommandBuffer(vulkanObject,imageIndex,currentFrame,vertexBuffer,indexBuffer,descriptorSets);
+    lreRecordDrawCommandBuffer(vulkanObject,imageIndex,currentFrame,drawInfo);
 
     VkSubmitInfo submitInfo; memset(&submitInfo,0,sizeof(submitInfo));
     submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;

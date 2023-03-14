@@ -4,6 +4,14 @@
 #include "cglm.h"
 #include "pch.h"
 
+//bindings, bindingtype, descriptorcount, stageflags
+//vertex information
+//buffers (vertex and index)
+//create texture, and buffers
+//potentially update those
+//change settings in the pipeline and rebuild after stuff like new shaders
+//cleanup (potentially a class wrapper later on)
+
 static const int VERTEX_ATTRIB_COUNT = 3;
 
 typedef struct Vertex {

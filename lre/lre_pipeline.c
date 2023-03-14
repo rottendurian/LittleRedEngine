@@ -255,121 +255,6 @@ LreDescriptorPool lreCreateDescriptorPool(VkDevice device,VkDescriptorSetLayout 
 
     return lrePool;
     
-    // LreDescriptorPool lrePool;
-    
-    // lrePool.descriptorSetLayout = descriptorSetLayout;
-
-    // va_list args;
-    // va_start(args,argCount);
-
-    // VkDescriptorPoolSize* poolSize = (VkDescriptorPoolSize*)alloca(argCount*sizeof(VkDescriptorPoolSize)); 
-    // memset(poolSize,0,argCount*sizeof(VkDescriptorPoolSize));
-
-    // //this is sort of backwards
-    // VkWriteDescriptorSet *descriptorWrites = (VkWriteDescriptorSet*)alloca(descriptorCount*argCount*sizeof(VkWriteDescriptorSet));
-    // memset(descriptorWrites,0,descriptorCount*argCount*sizeof(VkWriteDescriptorSet));
-
-    // for (uint32_t i = 0; i < argCount; i++) {
-    //     VkDescriptorType type = va_arg(args,VkDescriptorType);
-    //     poolSize[i].type = type;
-    //     poolSize[i].descriptorCount = descriptorCount;
-    //     // printf("type: %d\n",poolSize[i].type);
-    //     // for (int i = 0; i < argCount; i++) {
-    //     //     printf("%d \n",poolSize[i].type);
-    //     // }
-        
-    //     switch (type) {
-    //         case VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER:
-    //             LreBufferObject* buffer = va_arg(args,LreBufferObject*);
-    //             for (uint32_t j = 0; j < descriptorCount; j++) { //this is meant to be outer loop
-    //                 descriptorWrites[i+j*argCount].descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
-                    
-    //                 VkDescriptorBufferInfo *bufferInfo = (VkDescriptorBufferInfo*)malloc(sizeof(VkDescriptorBufferInfo));
-    //                 bufferInfo->buffer = buffer[j].buffer;
-    //                 bufferInfo->offset = 0;
-    //                 bufferInfo->range = buffer[j].size;
-                    
-    //                 descriptorWrites[i+j*argCount].pBufferInfo = bufferInfo;
-    //             }
-                
-    //             break;
-    //         case VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER:
-    //             LreTextureImageObject* textureImage =  va_arg(args,LreTextureImageObject*);
-    //             for(uint32_t j = 0; j < descriptorCount; j++) {
-    //                 descriptorWrites[i+j*argCount].descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
-                    
-    //                 VkDescriptorImageInfo* imageInfo = (VkDescriptorImageInfo*)malloc(sizeof(VkDescriptorImageInfo));
-    //                 imageInfo->imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
-    //                 imageInfo->imageView = textureImage->view;
-    //                 imageInfo->sampler = textureImage->sampler;
-
-    //                 descriptorWrites[i+j*argCount].pImageInfo = imageInfo;
-    //             }
-    //             break;
-    //         default:
-    //             LOGTOFILE(LOG_LEVEL_ERROR,"Descriptor type not supported!");
-    //             break;
-    //     }
-    // }
-    
-    
-    // va_end(args);
-
-    // VkDescriptorPoolCreateInfo poolInfo; memset(&poolInfo,0,sizeof(poolInfo));
-    // poolInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
-    // poolInfo.poolSizeCount = argCount;
-    // poolInfo.pPoolSizes = poolSize;
-    // poolInfo.maxSets = descriptorCount;
-
-    // // for (int i = 0; i < argCount; i++) {
-    // //     printf("%d \n",poolSize[i].type);
-    // // }
-
-    // if (vkCreateDescriptorPool(device, &poolInfo, NULL, &lrePool.descriptorPool) != VK_SUCCESS) {
-    //     LOGTOFILE(LOG_LEVEL_ERROR,"Failed to create descriptor pool");
-    // }
-
-    // //setup descriptor sets
-    // VkDescriptorSetLayout* layouts = (VkDescriptorSetLayout*)alloca(descriptorCount*sizeof(VkDescriptorSetLayout));
-    // for (int i = 0; i < descriptorCount; i++) {
-    //     layouts[i] = lrePool.descriptorSetLayout;
-    // }
-
-    // VkDescriptorSetAllocateInfo allocInfo; memset(&allocInfo,0,sizeof(allocInfo));
-    // allocInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
-    // allocInfo.descriptorPool = lrePool.descriptorPool;
-    // allocInfo.descriptorSetCount = descriptorCount;
-    // allocInfo.pSetLayouts = layouts;
-
-    // lrePool.descriptorSets = (VkDescriptorSet*)malloc(descriptorCount*sizeof(VkDescriptorSet));
-
-    // if (vkAllocateDescriptorSets(device, &allocInfo, lrePool.descriptorSets) != VK_SUCCESS) {
-    //     LOGTOFILE(LOG_LEVEL_ERROR,"failed to allocate descriptor sets!");
-    // }
-
-
-    // for (uint32_t i = 0; i < descriptorCount; i++) {
-    //     for (uint32_t j = 0; j < argCount; j++) {
-    //         descriptorWrites[i*argCount+j].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-    //         descriptorWrites[i*argCount+j].dstSet = lrePool.descriptorSets[i];
-    //         descriptorWrites[i*argCount+j].dstBinding = j;
-    //         descriptorWrites[i*argCount+j].dstArrayElement = 0;
-    //         descriptorWrites[i*argCount+j].descriptorCount = 1;
-    //         descriptorWrites[i*argCount+j].pTexelBufferView = NULL;
-    //     }
-    //     vkUpdateDescriptorSets(device, argCount, &descriptorWrites[i*argCount], 0, NULL);
-    //     printf("when");
-
-    //     for (uint32_t j = 0; j < argCount; j++) {
-    //         free((void*)descriptorWrites[i*argCount+j].pBufferInfo);
-    //         free((void*)descriptorWrites[i*argCount+j].pImageInfo);
-    //     }
-        
-    // }
-
-    // // free(descriptorWrites);
-    // // free(poolSize);
-    // return lrePool;
 }
 
 
@@ -497,7 +382,7 @@ VkPipeline lreCreateGraphicsPipeline(VkDevice device,VkRenderPass renderPass,VkP
     rasterizer.rasterizerDiscardEnable = VK_FALSE;
     rasterizer.polygonMode = VK_POLYGON_MODE_FILL;
     rasterizer.lineWidth = 1.0f;
-    rasterizer.cullMode = VK_CULL_MODE_BACK_BIT; 
+    rasterizer.cullMode = VK_CULL_MODE_NONE;//VK_CULL_MODE_BACK_BIT; 
     rasterizer.frontFace = VK_FRONT_FACE_CLOCKWISE;
     rasterizer.depthBiasEnable = VK_FALSE;
 

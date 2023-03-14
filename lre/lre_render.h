@@ -15,6 +15,22 @@ typedef struct LreFrameBuffer {
     size_t count;    
 } LreFrameBuffer;
 
+typedef struct LreDrawInfo {
+    VkBuffer* vertexBuffers;
+    VkDeviceSize* bufferOffsets;
+    uint32_t bufferStartIndex;
+    uint32_t bufferCount;
+
+    VkBuffer indexBuffer;
+    uint32_t indexCount;
+    VkIndexType indexType;
+    uint32_t indexOffset;
+
+    VkDescriptorSet* descriptorSets;
+    uint32_t descriptorStartSet;
+    uint32_t descriptorCount;
+} LreDrawInfo;
+
 LreFrameBuffer lreCreateFrameBuffer(VkDevice device,LreSwapChain lreSwapChain,LreSwapChainImages* lreSwapChainImages,VkRenderPass renderPass);
 static inline void lreDestroyFrameBuffer(VkDevice device,LreFrameBuffer frameBuffers) {
     for (size_t i = 0; i < frameBuffers.count; i++) {
@@ -73,9 +89,9 @@ typedef struct lreVulkanObject {
     LreSynchronization syncObjects;
 } lreVulkanObject;
 
-void lreDrawFrame(lreVulkanObject *vulkanObject,uint32_t currentFrame,VkBuffer vertexBuffer,VkBuffer indexBuffer,VkDescriptorSet* descriptorSets);
+void lreDrawFrame(lreVulkanObject *vulkanObject,uint32_t currentFrame,LreDrawInfo* drawInfo);
 
-void lreRecordDrawCommandBuffer(lreVulkanObject* vulkanObject,uint32_t imageIndex,uint32_t currentFrame,VkBuffer vertexBuffer,VkBuffer indexBuffer,VkDescriptorSet* descriptorSets);
+void lreRecordDrawCommandBuffer(lreVulkanObject* vulkanObject,uint32_t imageIndex,uint32_t currentFrame,LreDrawInfo* drawInfo);
 
 void lreReCreateSwapChain(lreVulkanObject *vulkanObject);
 

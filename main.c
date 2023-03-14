@@ -3,6 +3,11 @@
 #include "lre_vertex.h"
 #include "lre_object.h"
 
+//TODO
+//DEPTH BUFFER
+//MODEL LOADING
+//FIX INDEXED DRAW SO ITS NOT FIXED
+
 typedef struct UniformBufferObject {
     mat4 model;
     mat4 view;
@@ -38,9 +43,9 @@ int main() {
     
     vulkanObject.lreSwapChain = createSwapChain(vulkanObject);
     vulkanObject.lreSwapChainImages = createImageViews(vulkanObject);
+
+
     vulkanObject.renderPass = createRenderPass(vulkanObject);
-
-
     VkDescriptorSetLayoutBinding* bindings = (VkDescriptorSetLayoutBinding*)alloca(sizeof(VkDescriptorSetLayoutBinding)*2); memset(bindings,0,sizeof(bindings));
     bindings[0].binding = 0;
     bindings[0].descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
@@ -75,11 +80,17 @@ int main() {
         {{-0.5f, -0.5f,0.0f}, {1.0f, 0.0f, 0.0f}, {1.0f, 0.0f}},
         {{0.5f, -0.5f,0.0f}, {0.0f, 1.0f, 0.0f}, {0.0f, 0.0f}},
         {{0.5f, 0.5f,0.0f}, {0.0f, 0.0f, 1.0f}, {0.0f, 1.0f}},
-        {{-0.5f, 0.5f,0.0f}, {1.0f, 1.0f, 1.0f}, {1.0f, 1.0f}}
+        {{-0.5f, 0.5f,0.0f}, {1.0f, 1.0f, 1.0f}, {1.0f, 1.0f}},
+
+        {{-0.5f, -0.5f, -0.5f}, {1.0f, 0.0f, 0.0f}, {0.0f, 0.0f}},
+        {{0.5f, -0.5f, -0.5f}, {0.0f, 1.0f, 0.0f}, {1.0f, 0.0f}},
+        {{0.5f, 0.5f, -0.5f}, {0.0f, 0.0f, 1.0f}, {1.0f, 1.0f}},
+        {{-0.5f, 0.5f, -0.5f}, {1.0f, 1.0f, 1.0f}, {0.0f, 1.0f}}
     };
 
     const uint16_t indices[] = {
         0,1,2,2,3,0,
+        4,5,6,6,7,4
     };
     
     LreBufferObject vertexBuffer = lreCreateBufferStaged(vulkanObject.device,vulkanObject.physicalDevice,vulkanObject.commandPool,vulkanObject.graphicsQueue,
@@ -98,16 +109,32 @@ int main() {
 
     LreDescriptorPool descriptorPool = lreCreateDescriptorPool(vulkanObject.device,descriptorSetLayout,MAX_FRAMES_IN_FLIGHT,2,VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,uniformBuffers,VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER,&textureImage);
     
-    vulkanObject.commandBuffer = createCommandBuffer(vulkanObject);
-    vulkanObject.syncObjects = createSyncObjects(vulkanObject);
+    vulkanObject.commandBuffer = lreCreateDrawCommandBuffer(vulkanObject.device,vulkanObject.commandPool);
+    vulkanObject.syncObjects = lreCreateSyncObjects(vulkanObject.device);
 
     uint32_t currentFrame = 0;
     glfwSetWindowUserPointer(vulkanObject.window.window,&vulkanObject.window);
 
+    VkDeviceSize bufferOffsets[] = {0};
+    LreDrawInfo drawInfo;
+    drawInfo.vertexBuffers = &vertexBuffer.buffer;
+    drawInfo.bufferOffsets = bufferOffsets;
+    drawInfo.bufferCount = 1;
+    drawInfo.bufferStartIndex = 0;
+
+    drawInfo.indexBuffer = indexBuffer.buffer;
+    drawInfo.indexCount = sizeof(indices)/sizeof(indices[0]);
+    drawInfo.indexType = VK_INDEX_TYPE_UINT16;
+    drawInfo.indexOffset = 0;
+
+    drawInfo.descriptorSets = descriptorPool.descriptorSets;
+    drawInfo.descriptorStartSet = 0;
+    drawInfo.descriptorCount = 1;
+
     while (!lreWindowShouldClose(&vulkanObject.window)) {
         glfwPollEvents();
         updateUBOs(&vulkanObject,uniformBuffers,currentFrame);
-        lreDrawFrame(&vulkanObject,currentFrame,vertexBuffer.buffer,indexBuffer.buffer,descriptorPool.descriptorSets);
+        lreDrawFrame(&vulkanObject,currentFrame,&drawInfo);
         currentFrame = (currentFrame + 1) % MAX_FRAMES_IN_FLIGHT;
     }
     vkDeviceWaitIdle(vulkanObject.device);
