@@ -321,8 +321,6 @@ VkRenderPass lreCreateRenderPass(VkDevice device,VkPhysicalDevice physicalDevice
 
     if (vkCreateRenderPass(device, &renderPassInfo, NULL, &renderPass) != VK_SUCCESS) {
         LOGTOFILE(LOG_LEVEL_ERROR,"Failed to create render pass!");
-        // fprintf(stderr,"Failed to create render pass!");
-        // exit(EXIT_FAILURE);
     }
 
     return renderPass;
@@ -374,9 +372,6 @@ VkPipeline lreCreateGraphicsPipeline(VkDevice device,VkRenderPass renderPass,VkP
     fragShaderStageInfo.pName = "main";
 
     VkPipelineShaderStageCreateInfo shaderStages[] = {vertShaderStageInfo, fragShaderStageInfo};
-
-    // VkVertexInputBindingDescription bindingDescription = VertexGetBindingDescription();
-    // VkVertexInputAttributeDescription* attributeDescription = VertexGetAttributeDescriptions(); //2
 
     VkPipelineVertexInputStateCreateInfo vertexInputInfo; memset(&vertexInputInfo,0,sizeof(vertexInputInfo));
     vertexInputInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO;

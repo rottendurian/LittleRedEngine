@@ -32,7 +32,7 @@ static inline VkSurfaceFormatKHR chooseSwapSurfaceFormat(const VkSurfaceFormatKH
 
 static inline VkPresentModeKHR chooseSwapPresentMode(const VkPresentModeKHR* availablePresentModes,uint32_t presentModeCount) {
     for (int i = 0; i < presentModeCount; i++) {
-        if (availablePresentModes[i] == VK_PRESENT_MODE_MAILBOX_KHR) {
+        if (availablePresentModes[i] == VK_PRESENT_MODE_IMMEDIATE_KHR) {
             return availablePresentModes[i];
         }
     }

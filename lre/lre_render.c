@@ -119,9 +119,9 @@ void lreRecordDrawCommandBuffer(LreVulkanObject* vulkanObject,uint32_t imageInde
     renderPassInfo.renderArea.offset = (VkOffset2D){0, 0};
     renderPassInfo.renderArea.extent = vulkanObject->lreSwapChain.extent;
 
-    VkClearValue clearColor[] = {{{0.0f, 0.0f, 0.0f, 1.0f}},{{1.0f, 0}}};
-    renderPassInfo.clearValueCount = sizeof(clearColor)/sizeof(clearColor[0]);
-    renderPassInfo.pClearValues = clearColor;
+    // VkClearValue clearColor[] = {{{1.0f, 1.0f, 1.0f, 1.0f}},{{1.0f, 0}}};
+    renderPassInfo.clearValueCount = drawInfo->clearColorCount;
+    renderPassInfo.pClearValues = drawInfo->clearColor;
 
     vkCmdBeginRenderPass(vulkanObject->commandBuffer[currentFrame], &renderPassInfo, VK_SUBPASS_CONTENTS_INLINE);
 

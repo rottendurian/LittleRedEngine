@@ -3,11 +3,59 @@
 
 #include "lre_vertex.h"
 #include "lre_object.h"
+#include "fast_obj.h"
+#include "array/array.h"
+#define HASHTABLEDEFAULTFILLVALUE 0
+#define HASHTABLEDEFAULTTYPEVALUE (Vertex){{0.0f,0.0f,0.0f},{0.0f,0.0f,0.0f},{0.0f,0.0f}}
+#include "hashtable/hashtable.h"
+
+static inline size_t VertexHash(Vertex vertex) {
+    const size_t prime = 0x01000193; // prime number for FNV-1a
+    size_t hash = 0x811c9dc5; // FNV-1a offset basis
+
+    // Hash the pos field
+    hash = (hash ^ *(const uint32_t*)&vertex.pos[0]) * prime;
+    hash = (hash ^ *(const uint32_t*)&vertex.pos[1]) * prime;
+    hash = (hash ^ *(const uint32_t*)&vertex.pos[2]) * prime;
+
+    // Hash the color field
+    hash = (hash ^ *(const uint32_t*)&vertex.color[0]) * prime;
+    hash = (hash ^ *(const uint32_t*)&vertex.color[1]) * prime;
+    hash = (hash ^ *(const uint32_t*)&vertex.color[2]) * prime;
+
+    // Hash the texCoord field
+    hash = (hash ^ *(const uint32_t*)&vertex.texCoord[0]) * prime;
+    hash = (hash ^ *(const uint32_t*)&vertex.texCoord[1]) * prime;
+
+    return (size_t)hash;
+}
+
+static inline bool VertexCmp(Vertex v1,Vertex v2) {
+    // Vertex vertex = v1;
+    // fprintf(stdout,"p{%f,%f,%f},c{%f,%f,%f},t{%f,%f} ==",vertex.pos[0],vertex.pos[1],vertex.pos[2],vertex.color[0],vertex.color[1],vertex.color[2],vertex.texCoord[0],vertex.texCoord[1]);
+    // vertex = v2;
+    // fprintf(stdout,"p{%f,%f,%f},c{%f,%f,%f},t{%f,%f}\n",vertex.pos[0],vertex.pos[1],vertex.pos[2],vertex.color[0],vertex.color[1],vertex.color[2],vertex.texCoord[0],vertex.texCoord[1]);
+    int posComparison = memcmp(&v1.pos, &v2.pos, sizeof(vec3));
+    if (posComparison != 0) {
+        return !posComparison;
+    }
+
+    int colorComparison = memcmp(&v1.color, &v2.color, sizeof(vec3));
+    if (colorComparison != 0) {
+        return !colorComparison;
+    }
+
+    return !memcmp(&v1.texCoord, &v2.texCoord, sizeof(vec2));
+}
+
+array(Vertex,0);
+array(uint32_t,0);
+hashtable(Vertex,uint32_t,VertexHash,VertexCmp,HASHNULL);
+
+
 
 //TODO
-//DEPTH BUFFER
 //MODEL LOADING
-//FIX INDEXED DRAW SO ITS NOT FIXED
 
 typedef struct UniformBufferObject {
     mat4 model;
@@ -29,6 +77,69 @@ static void updateUBOs(LreVulkanObject* vulkanObject,LreUniformBufferObject* uni
 int main() {
     log_setup();
     LOGSELECTFILE("stderr.log");
+    freopen("stderr.log","w",stderr);
+
+    fastObjMesh* mesh = fast_obj_read("res/meshes/vikingroom/viking_room.obj");
+
+    array_Vertex* mvertices = array_Vertex_new(50);
+    array_uint32_t* mindices = array_uint32_t_new(50);
+    hashtable_Vertex* hashtableVertices = hashtable_Vertex_create();
+
+    for (uint32_t i = 0; i < mesh->group_count; i++) {
+        const fastObjGroup group = mesh->groups[i];
+        //idk
+
+        int idx = 0;
+        for (uint32_t j = 0; j < group.face_count; j++) {
+            uint32_t fv = mesh->face_vertices[group.face_offset+j];
+            
+            for (uint32_t k = 0; k < fv; k++) {
+                fastObjIndex mi = mesh->indices[group.index_offset+idx];
+                
+                Vertex vertex;
+                vertex.pos[0] = mesh->positions[3 * mi.p + 0];
+                vertex.pos[1] = mesh->positions[3 * mi.p + 1];
+                vertex.pos[2] = mesh->positions[3 * mi.p + 2];
+
+                vertex.color[0] = 1.0f;
+                vertex.color[1] = 1.0f;
+                vertex.color[2] = 1.0f;
+
+                vertex.texCoord[0] = mesh->texcoords[2 * mi.t + 0];
+                vertex.texCoord[1] = 1.0f - mesh->texcoords[2 * mi.t + 1];
+
+                hashtable_Vertex_meta* meta = hashtable_Vertex_get(hashtableVertices,vertex);
+                // printf("found tag %zu\n",(size_t)meta);
+
+                if (meta == NULL) {
+                    hashtableVertices = hashtable_Vertex_insert(hashtableVertices,vertex,mvertices->items);
+                    mindices = array_uint32_t_push(mindices,mvertices->items);
+                    mvertices = array_Vertex_push(mvertices,vertex);
+                } else {
+                    // printf("data = %lu\n",meta->data);
+                    mindices = array_uint32_t_push(mindices,(uint32_t)meta->data);
+                }
+                
+                idx++;
+            }
+        }
+
+    }
+    
+    printf("hashtable size %zu",hashtableVertices->item_count);
+    hashtable_Vertex_cleanup(hashtableVertices);
+    // for (int i = 0; i < mindices->items; i++) {
+    //     fprintf(stdout,"%lu,",*_array_uint32_t_get(mindices,i));
+    // }
+    fprintf(stdout,"indices size %zu\n",mindices->items);
+
+    // for (int i = 0; i < mvertices->items/4; i++) {
+    //     Vertex vertex = *_array_Vertex_get(mvertices,i);
+    //     fprintf(stdout,"p{%f,%f,%f},t{%f,%f}\n",vertex.pos[0],vertex.pos[1],vertex.pos[2],vertex.texCoord[0],vertex.texCoord[1]);
+    // }
+    fprintf(stdout,"vertices size %zu\n",mvertices->items);
+
+    // exit(EXIT_SUCCESS);
 
     LreVulkanObject vulkanObject;
     vulkanObject.window = createWindow(50,50,"hello world");     
@@ -44,6 +155,8 @@ int main() {
     
     vulkanObject.lreSwapChain = createSwapChain(vulkanObject);
     vulkanObject.lreSwapChainImages = createImageViews(vulkanObject);
+
+    
 
 
     vulkanObject.renderPass = createRenderPass(vulkanObject);
@@ -79,36 +192,41 @@ int main() {
 
     vulkanObject.commandPool = createCommandPool(vulkanObject);
 
-    const Vertex vertices[] = {
-        {{-0.5f, -0.5f,0.0f}, {1.0f, 0.0f, 0.0f}, {1.0f, 0.0f}},
-        {{0.5f, -0.5f,0.0f}, {0.0f, 1.0f, 0.0f}, {0.0f, 0.0f}},
-        {{0.5f, 0.5f,0.0f}, {0.0f, 0.0f, 1.0f}, {0.0f, 1.0f}},
-        {{-0.5f, 0.5f,0.0f}, {1.0f, 1.0f, 1.0f}, {1.0f, 1.0f}},
+    // const Vertex vertices[] = {
+    //     {{-0.5f, -0.5f,0.0f}, {1.0f, 0.0f, 0.0f}, {1.0f, 0.0f}},
+    //     {{0.5f, -0.5f,0.0f}, {0.0f, 1.0f, 0.0f}, {0.0f, 0.0f}},
+    //     {{0.5f, 0.5f,0.0f}, {0.0f, 0.0f, 1.0f}, {0.0f, 1.0f}},
+    //     {{-0.5f, 0.5f,0.0f}, {1.0f, 1.0f, 1.0f}, {1.0f, 1.0f}},
 
-        {{-0.5f, -0.5f, -0.5f}, {1.0f, 0.0f, 0.0f}, {0.0f, 0.0f}},
-        {{0.5f, -0.5f, -0.5f}, {0.0f, 1.0f, 0.0f}, {1.0f, 0.0f}},
-        {{0.5f, 0.5f, -0.5f}, {0.0f, 0.0f, 1.0f}, {1.0f, 1.0f}},
-        {{-0.5f, 0.5f, -0.5f}, {1.0f, 1.0f, 1.0f}, {0.0f, 1.0f}}
-    };
+    //     {{-0.5f, -0.5f, -0.5f}, {1.0f, 0.0f, 0.0f}, {0.0f, 0.0f}},
+    //     {{0.5f, -0.5f, -0.5f}, {0.0f, 1.0f, 0.0f}, {1.0f, 0.0f}},
+    //     {{0.5f, 0.5f, -0.5f}, {0.0f, 0.0f, 1.0f}, {1.0f, 1.0f}},
+    //     {{-0.5f, 0.5f, -0.5f}, {1.0f, 1.0f, 1.0f}, {0.0f, 1.0f}}
+    // };
 
-    const uint16_t indices[] = {
-        0,1,2,2,3,0,
-        4,5,6,6,7,4
-    };
+    // const uint32_t indices[] = {
+    //     0,1,2,2,3,0,
+    //     4,5,6,6,7,4
+    // };
+
+    Vertex* vertices = _array_Vertex_get(mvertices,0);
+    uint32_t* indices = _array_uint32_t_get(mindices,0);
+    VkDeviceSize verticesSize = mvertices->items*sizeof(Vertex);
+    VkDeviceSize indicesSize = mindices->items;
     
     LreBufferObject vertexBuffer = lreCreateBufferStaged(vulkanObject.device,vulkanObject.physicalDevice,vulkanObject.commandPool,vulkanObject.graphicsQueue,
-        vertices,sizeof(vertices),VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_VERTEX_BUFFER_BIT,
+        vertices,verticesSize,VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_VERTEX_BUFFER_BIT,
         VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
 
     LreBufferObject indexBuffer = lreCreateBufferStaged(vulkanObject.device,vulkanObject.physicalDevice,vulkanObject.commandPool,vulkanObject.graphicsQueue,
-        indices,sizeof(indices),VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_INDEX_BUFFER_BIT,
+        indices,indicesSize*sizeof(uint32_t),VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_INDEX_BUFFER_BIT,
         VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
 
     LreUniformBufferObject* uniformBuffers = (LreUniformBufferObject*)malloc(MAX_FRAMES_IN_FLIGHT*sizeof(LreUniformBufferObject));
     for (int i = 0; i < MAX_FRAMES_IN_FLIGHT; i++) {
         uniformBuffers[i] = lreCreateUniformBuffer(vulkanObject.device,vulkanObject.physicalDevice,sizeof(UniformBufferObject));
     }
-    LreTextureImageObject textureImage = lreCreateTextureImage2D(vulkanObject.device,vulkanObject.physicalDevice,vulkanObject.commandPool,vulkanObject.graphicsQueue,"res/textures/bluetreesforest.jpg");
+    LreTextureImageObject textureImage = lreCreateTextureImage2D(vulkanObject.device,vulkanObject.physicalDevice,vulkanObject.commandPool,vulkanObject.graphicsQueue,"res/meshes/vikingroom/viking_room.png");
 
     LreDescriptorPool descriptorPool = lreCreateDescriptorPool(vulkanObject.device,descriptorSetLayout,MAX_FRAMES_IN_FLIGHT,2,VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,uniformBuffers,VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER,&textureImage);
     
@@ -126,15 +244,34 @@ int main() {
     drawInfo.bufferStartIndex = 0;
 
     drawInfo.indexBuffer = indexBuffer.buffer;
-    drawInfo.indexCount = sizeof(indices)/sizeof(indices[0]);
-    drawInfo.indexType = VK_INDEX_TYPE_UINT16;
+    drawInfo.indexCount = indicesSize;
+    drawInfo.indexType = VK_INDEX_TYPE_UINT32;
     drawInfo.indexOffset = 0;
 
     drawInfo.descriptorSets = descriptorPool.descriptorSets;
     drawInfo.descriptorStartSet = 0;
     drawInfo.descriptorCount = 1;
 
+    VkClearValue clearColor[] = {{{0.0f, 1.0f, 1.0f, 1.0f}},{{1.0f, 0}}};
+    drawInfo.clearColorCount = sizeof(clearColor)/sizeof(clearColor[0]);
+    drawInfo.clearColor = clearColor;
+
+    double time = glfwGetTime();
+    double prevTime = time;
+    int framecount = 0;
+    double deltaTime = 0;
+
     while (!lreWindowShouldClose(&vulkanObject.window)) {
+        prevTime = time;
+        time = glfwGetTime();
+        deltaTime += (time-prevTime);
+        framecount++;
+        if (framecount >= 2000) {
+            printf("FPS %lf \n",1.0/(deltaTime/(double)framecount));
+            framecount = 0;
+            deltaTime = 0.0;
+        }
+        
         glfwPollEvents();
         updateUBOs(&vulkanObject,uniformBuffers,currentFrame);
         lreDrawFrame(&vulkanObject,currentFrame,&drawInfo);
@@ -149,6 +286,9 @@ int main() {
 
     lreDestroyBuffer(vulkanObject.device,vertexBuffer);
     lreDestroyBuffer(vulkanObject.device,indexBuffer);
+    array_uint32_t_cleanup(mindices);
+    array_Vertex_cleanup(mvertices);
+    
     for (int i = 0; i < MAX_FRAMES_IN_FLIGHT; i++) {
         lreDestroyUniformBuffer(vulkanObject.device,uniformBuffers[i]);
     }
@@ -169,6 +309,8 @@ int main() {
     destroyDebugMessenger(vulkanObject);
     destroyInstance(vulkanObject);
     destroyWindow(vulkanObject);
+
+    fast_obj_destroy(mesh);
 
     log_cleanup();
     return EXIT_SUCCESS;

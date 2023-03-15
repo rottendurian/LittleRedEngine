@@ -116,6 +116,9 @@ typedef struct LreDrawInfo {
     VkDescriptorSet* descriptorSets;
     uint32_t descriptorStartSet;
     uint32_t descriptorCount;
+
+    uint32_t clearColorCount;
+    VkClearValue* clearColor;
 } LreDrawInfo;
 
 typedef struct LreSynchronization {

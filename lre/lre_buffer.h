@@ -4,8 +4,6 @@
 #include "pch.h"
 #include "lre_swapchain.h"
 
-
-
 LreUniformBufferObject lreCreateUniformBuffer(VkDevice device,VkPhysicalDevice physicalDevice,VkDeviceSize size);
 static inline void lreDestroyUniformBuffer(VkDevice device,LreUniformBufferObject uniform) {
     if (uniform.map) {
@@ -15,7 +13,6 @@ static inline void lreDestroyUniformBuffer(VkDevice device,LreUniformBufferObjec
     vkDestroyBuffer(device, uniform.buffer, NULL);
     vkFreeMemory(device, uniform.memory, NULL);
 }
-
 
 LreBufferObject lreCreateBuffer(VkDevice device, VkPhysicalDevice physicalDevice, VkDeviceSize size, VkBufferUsageFlags usage, VkMemoryPropertyFlags properties);
 

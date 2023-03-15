@@ -130,7 +130,7 @@ static hashset_##type* hashset_##type##_remove(hashset_##type* table, ##type key
     size_t original_index = index; \
     while (cmpfunc((cur = _hashset_##type##_get(table,++index))->key,key) == false) { \
         if (index-original_index >= table->max_col) { \
-            fprintf(stderr,"Could not find key\n");\
+            fprintf(stderr,"Could not find hashset key\n");\
             return table; \
         } \
     } \

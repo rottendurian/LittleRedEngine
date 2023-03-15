@@ -16,6 +16,7 @@ target_include_directories(${PROJECT_NAME}
     PUBLIC dep/cglm/include
     PUBLIC lre
     PUBLIC dep/lreutils
+    PUBLIC dep/fast_obj
 )
 
 find_package(Vulkan REQUIRED)
@@ -32,6 +33,8 @@ add_subdirectory(dep/lreutils)
 
 add_subdirectory(lre)
 
+add_subdirectory(dep/fast_obj)
+
 target_link_libraries(${PROJECT_NAME} 
     Vulkan::Vulkan
 )
@@ -41,4 +44,5 @@ target_link_libraries(${PROJECT_NAME}
     cglm
     lre
     lreutils
+    fast_obj_lib
 )
