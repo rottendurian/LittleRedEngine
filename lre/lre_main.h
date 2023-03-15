@@ -6,7 +6,7 @@
 #include "lre_object.h"
 
 typedef struct LreVulkanContext {
-    lreVulkanObject vulkanObject;
+    LreVulkanObject vulkanObject;
 } LreVulkanContext;
 
 LreVulkanContext* LreGenerateVulkanContext(uint32_t windowWidth, uint32_t windowHeight, const char* windowName);

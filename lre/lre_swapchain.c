@@ -158,13 +158,16 @@ LreSwapChain lreCreateSwapChain(LreWindow* window,VkSurfaceKHR surface,VkDevice 
     return lreSwapChain;
 }
 
-static inline void lreCleanUpSwapChain(lreVulkanObject* vulkanObject) {
+#include "lre_object.h"
+
+static inline void lreCleanUpSwapChain(LreVulkanObject* vulkanObject) {
     lreDestroyFrameBuffer(vulkanObject->device,vulkanObject->frameBuffer);
-    lreDestroyImageViews(vulkanObject->device,&vulkanObject->lreSwapChainImages);
+    lreDestroySwapchainImageViews(vulkanObject->device,&vulkanObject->lreSwapChainImages);
     lreDestroySwapChain(vulkanObject->device,&vulkanObject->lreSwapChain);
+    lreDestroyTexture(vulkanObject->device,vulkanObject->depthImage);
 }
 
-void lreReCreateSwapChain(lreVulkanObject *vulkanObject) {
+void lreReCreateSwapChain(LreVulkanObject *vulkanObject) {
     //printf("resizing");
     int width = 0, height = 0;
     glfwGetFramebufferSize(vulkanObject->window.window, &width, &height);
@@ -176,8 +179,9 @@ void lreReCreateSwapChain(lreVulkanObject *vulkanObject) {
     lreCleanUpSwapChain(vulkanObject);
 
     vulkanObject->lreSwapChain = lreCreateSwapChain(&vulkanObject->window,vulkanObject->surface,vulkanObject->device,vulkanObject->physicalDevice);
-    vulkanObject->lreSwapChainImages = lreCreateImageViews(vulkanObject->device,&vulkanObject->lreSwapChain);
-    vulkanObject->frameBuffer = lreCreateFrameBuffer(vulkanObject->device,vulkanObject->lreSwapChain,&vulkanObject->lreSwapChainImages,vulkanObject->renderPass);
+    vulkanObject->lreSwapChainImages = lreCreateSwapchainImageViews(vulkanObject->device,&vulkanObject->lreSwapChain);
+    vulkanObject->depthImage = lreCreateDepthResources(vulkanObject->device,vulkanObject->physicalDevice,vulkanObject->lreSwapChain);
+    vulkanObject->frameBuffer = lreCreateFrameBuffer(vulkanObject->device,vulkanObject->lreSwapChain,&vulkanObject->lreSwapChainImages,vulkanObject->renderPass,vulkanObject->depthImage);
 }
 
 static inline LreSwapChainImages lreGetSwapChainImages(VkDevice device,VkSwapchainKHR swapChain) {
@@ -190,7 +194,7 @@ static inline LreSwapChainImages lreGetSwapChainImages(VkDevice device,VkSwapcha
     return swapChainImages;
 }
 
-LreSwapChainImages lreCreateImageViews(VkDevice device,LreSwapChain* swapChain) {
+LreSwapChainImages lreCreateSwapchainImageViews(VkDevice device,LreSwapChain* swapChain) {
     LreSwapChainImages images = lreGetSwapChainImages(device,swapChain->swapChain);
 
     images.imageViews = (VkImageView*)malloc(images.count*sizeof(VkImageView));
@@ -226,7 +230,6 @@ LreSwapChainImages lreCreateImageViews(VkDevice device,LreSwapChain* swapChain) 
     
     return images;
 }
-
 
 
 

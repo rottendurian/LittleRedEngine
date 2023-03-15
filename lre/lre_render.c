@@ -3,17 +3,18 @@
 
 #include "lre_render.h"
 
-LreFrameBuffer lreCreateFrameBuffer(VkDevice device,LreSwapChain lreSwapChain,LreSwapChainImages* lreSwapChainImages,VkRenderPass renderPass) {
+LreFrameBuffer lreCreateFrameBuffer(VkDevice device,LreSwapChain lreSwapChain,LreSwapChainImages* lreSwapChainImages,VkRenderPass renderPass,LreTextureObject depthImage) {
     VkFramebuffer *swapChainFrameBuffers = (VkFramebuffer*)malloc(lreSwapChainImages->count*sizeof(VkFramebuffer));
-    for (size_t i = 0; i < lreSwapChainImages->count; i++) {
+    for (uint32_t i = 0; i < lreSwapChainImages->count; i++) {
         VkImageView attachments[] = {
-            lreSwapChainImages->imageViews[i]
+            lreSwapChainImages->imageViews[i],
+            depthImage.view
         };
 
         VkFramebufferCreateInfo framebufferInfo; memset(&framebufferInfo,0,sizeof(framebufferInfo));
         framebufferInfo.sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;
         framebufferInfo.renderPass = renderPass;
-        framebufferInfo.attachmentCount = 1;
+        framebufferInfo.attachmentCount = sizeof(attachments)/sizeof(attachments[0]);
         framebufferInfo.pAttachments = attachments;
         
         framebufferInfo.width = lreSwapChain.extent.width;
@@ -22,8 +23,6 @@ LreFrameBuffer lreCreateFrameBuffer(VkDevice device,LreSwapChain lreSwapChain,Lr
 
         if (vkCreateFramebuffer(device, &framebufferInfo, NULL, &swapChainFrameBuffers[i]) != VK_SUCCESS) {
             LOGTOFILE(LOG_LEVEL_ERROR,"Failed to create framebuffer!");
-            // fprintf(stderr,"Failed to create framebuffer!");
-            // exit(EXIT_FAILURE);
         }
     }
 
@@ -100,7 +99,7 @@ VkCommandBuffer* lreCreateDrawCommandBuffer(VkDevice device,VkCommandPool comman
     return commandBuffer;
 }
 
-void lreRecordDrawCommandBuffer(lreVulkanObject* vulkanObject,uint32_t imageIndex,uint32_t currentFrame,LreDrawInfo* drawInfo) {
+void lreRecordDrawCommandBuffer(LreVulkanObject* vulkanObject,uint32_t imageIndex,uint32_t currentFrame,LreDrawInfo* drawInfo) {
     VkCommandBufferBeginInfo beginInfo; memset(&beginInfo,0,sizeof(beginInfo));
     beginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
     beginInfo.flags = 0; // Optional
@@ -120,9 +119,9 @@ void lreRecordDrawCommandBuffer(lreVulkanObject* vulkanObject,uint32_t imageInde
     renderPassInfo.renderArea.offset = (VkOffset2D){0, 0};
     renderPassInfo.renderArea.extent = vulkanObject->lreSwapChain.extent;
 
-    VkClearValue clearColor = {{{0.0f, 0.0f, 0.0f, 1.0f}}};
-    renderPassInfo.clearValueCount = 1;
-    renderPassInfo.pClearValues = &clearColor;
+    VkClearValue clearColor[] = {{{0.0f, 0.0f, 0.0f, 1.0f}},{{1.0f, 0}}};
+    renderPassInfo.clearValueCount = sizeof(clearColor)/sizeof(clearColor[0]);
+    renderPassInfo.pClearValues = clearColor;
 
     vkCmdBeginRenderPass(vulkanObject->commandBuffer[currentFrame], &renderPassInfo, VK_SUBPASS_CONTENTS_INLINE);
 
@@ -190,7 +189,7 @@ LreSynchronization lreCreateSyncObjects(VkDevice device) {
     return syncObjects;
 }
 
-void lreDrawFrame(lreVulkanObject *vulkanObject,uint32_t currentFrame,LreDrawInfo* drawInfo) {
+void lreDrawFrame(LreVulkanObject *vulkanObject,uint32_t currentFrame,LreDrawInfo* drawInfo) {
     vkWaitForFences(vulkanObject->device, 1, &vulkanObject->syncObjects.inFlightFences[currentFrame], VK_TRUE, UINT64_MAX);
 
     uint32_t imageIndex;

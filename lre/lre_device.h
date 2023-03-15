@@ -7,22 +7,6 @@
 
 #include "pch.h"
 
-typedef struct LreQueueFamilyVec {
-    VkDeviceQueueCreateInfo* queueInfos;
-    uint32_t size;
-} LreQueueFamilyVec;
-
-typedef struct Optional_U32 {
-    bool has_value;
-    uint32_t value;
-} Optional_U32;
-
-typedef struct QueueFamilyIndices {
-    bool exists;
-    Optional_U32 graphicsFamily;
-    Optional_U32 presentFamily;
-} QueueFamilyIndices;
-
 static inline bool QueueFamilyIndices_isComplete(QueueFamilyIndices* data) {
     return data->graphicsFamily.has_value && data->presentFamily.has_value;
 }

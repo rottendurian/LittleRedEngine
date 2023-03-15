@@ -2,26 +2,9 @@
 #define lre_buffer_h
 
 #include "pch.h"
+#include "lre_swapchain.h"
 
-typedef struct LreBufferObject {
-    VkBuffer buffer;
-    VkDeviceMemory memory;
-    VkDeviceSize size;
-} LreBufferObject;
 
-typedef struct LreUniformBufferObject {
-    VkBuffer buffer;
-    VkDeviceMemory memory;
-    VkDeviceSize size;
-    void* map;
-} LreUniformBufferObject;
-
-typedef struct LreTextureImageObject {
-    VkImage image;
-    VkDeviceMemory memory;
-    VkImageView view;
-    VkSampler sampler;
-} LreTextureImageObject;
 
 LreUniformBufferObject lreCreateUniformBuffer(VkDevice device,VkPhysicalDevice physicalDevice,VkDeviceSize size);
 static inline void lreDestroyUniformBuffer(VkDevice device,LreUniformBufferObject uniform) {
@@ -61,11 +44,12 @@ static inline void lreDestroyBuffer(VkDevice device,LreBufferObject buffer) {
     vkFreeMemory(device,buffer.memory,NULL);
 }
 
-LreTextureImageObject lreCreateTextureImage(VkDevice device,VkPhysicalDevice physicalDevice,VkImageCreateInfo imageInfo);
+LreTextureObject lreCreateTexture(VkDevice device,VkPhysicalDevice physicalDevice,VkImageCreateInfo imageInfo);
 void lreTransitionImageLayout(VkDevice device,VkCommandPool commandPool,VkQueue graphicsQueue,VkImage image,VkFormat format,VkImageLayout oldLayout,VkImageLayout newLayout);
 void lreCopyBufferToImage(VkDevice device,VkCommandPool commandPool,VkQueue graphicsQueue,VkBuffer buffer,VkImage image,uint32_t width,uint32_t height);
 LreTextureImageObject lreCreateTextureImage2D(VkDevice device,VkPhysicalDevice physicalDevice,VkCommandPool commandPool,VkQueue graphicsQueue,const char* filepath);
 
+VkImageView lreCreateImageView(VkDevice device, VkImage image, VkFormat format, VkImageViewType viewType,VkImageAspectFlags aspectFlags);
 VkImageView lreCreateImageView2D(VkDevice device,VkImage image,VkFormat format);
 VkSampler lreCreateSampler2D(VkDevice device,VkPhysicalDevice physicalDevice,VkFilter mFilter,VkSamplerAddressMode samplerAddressMode);
 
@@ -75,5 +59,19 @@ static inline void lreDestroyTextureImage(VkDevice device, LreTextureImageObject
     vkDestroyImage(device,texture.image,NULL);
     vkFreeMemory(device,texture.memory,NULL);
 }
+
+static inline void lreDestroyTexture(VkDevice device, LreTextureObject texture) {
+    vkDestroyImageView(device,texture.view,NULL);
+    vkDestroyImage(device,texture.image,NULL);
+    vkFreeMemory(device,texture.memory,NULL);
+}
+
+LreTextureObject lreCreateDepthResources(VkDevice device,VkPhysicalDevice physicalDevice,LreSwapChain swapChain);
+
+VkFormat lreFindSupportedDepthFormat(VkPhysicalDevice physicalDevice);
+static inline bool lreHasStencilComponent(VkFormat format) {
+    return format == VK_FORMAT_D32_SFLOAT_S8_UINT || format == VK_FORMAT_D24_UNORM_S8_UINT;
+}
+
 
 #endif

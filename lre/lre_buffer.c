@@ -107,13 +107,11 @@ LreBufferObject lreCreateBufferStaged(VkDevice device, VkPhysicalDevice physical
     return buffer;
 }
 
-LreTextureImageObject lreCreateTextureImage(VkDevice device,VkPhysicalDevice physicalDevice,VkImageCreateInfo imageInfo) {
-    LreTextureImageObject textureImage;
+LreTextureObject lreCreateTexture(VkDevice device,VkPhysicalDevice physicalDevice,VkImageCreateInfo imageInfo) {
+    LreTextureObject textureImage;
 
     if (vkCreateImage(device, &imageInfo, NULL, &textureImage.image) != VK_SUCCESS) {
         LOGTOFILE(LOG_LEVEL_ERROR,"failed to create image!");
-        // fprintf(stderr,"failed to create image!");
-        // exit(EXIT_FAILURE);
     }
 
     VkMemoryRequirements memRequirements;
@@ -126,8 +124,6 @@ LreTextureImageObject lreCreateTextureImage(VkDevice device,VkPhysicalDevice phy
 
     if (vkAllocateMemory(device, &allocInfo, NULL, &textureImage.memory) != VK_SUCCESS) {
         LOGTOFILE(LOG_LEVEL_ERROR,"failed to allocate image memory!");
-        // fprintf(stderr,"failed to allocate image memory!");
-        // exit(EXIT_FAILURE);
     }
 
     vkBindImageMemory(device, textureImage.image, textureImage.memory, 0);
@@ -219,14 +215,14 @@ void lreCopyBufferToImage2D(VkDevice device,VkCommandPool commandPool,VkQueue gr
     lreEndSingleTimeCommands(device,graphicsQueue,commandPool,commandBuffer);
 }
 
-VkImageView lreCreateImageView2D(VkDevice device,VkImage image,VkFormat format) {
+VkImageView lreCreateImageView(VkDevice device, VkImage image, VkFormat format, VkImageViewType viewType,VkImageAspectFlags aspectFlags) {
     VkImageViewCreateInfo viewInfo; memset(&viewInfo,0,sizeof(viewInfo));
     viewInfo.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
     viewInfo.image = image;
-    viewInfo.viewType = VK_IMAGE_VIEW_TYPE_2D;
+    viewInfo.viewType = viewType;
     viewInfo.format = format;
     
-    viewInfo.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+    viewInfo.subresourceRange.aspectMask = aspectFlags;
     viewInfo.subresourceRange.baseMipLevel = 0;
     viewInfo.subresourceRange.levelCount = 1;
     viewInfo.subresourceRange.baseArrayLayer = 0;
@@ -242,6 +238,10 @@ VkImageView lreCreateImageView2D(VkDevice device,VkImage image,VkFormat format) 
         LOGTOFILE(LOG_LEVEL_ERROR,"failed to create image view");
     }
     return imageView;
+}
+
+VkImageView lreCreateImageView2D(VkDevice device,VkImage image,VkFormat format) {
+    return lreCreateImageView(device,image,format,VK_IMAGE_VIEW_TYPE_2D,VK_IMAGE_ASPECT_COLOR_BIT);
 }
 
 /*@mFilter - VK_FILTER_NEAREST/VK_FILTER_LINEAR
@@ -324,7 +324,12 @@ LreTextureImageObject lreCreateTextureImage2D(VkDevice device,VkPhysicalDevice p
     imageInfo.samples = VK_SAMPLE_COUNT_1_BIT;
     imageInfo.flags = 0; // Optional
     
-    LreTextureImageObject textureImage = lreCreateTextureImage(device,physicalDevice,imageInfo);
+    LreTextureObject textureObj = lreCreateTexture(device,physicalDevice,imageInfo);
+    LreTextureImageObject textureImage; //weirdchamp
+    textureImage.image = textureObj.image;
+    textureImage.memory = textureObj.memory;
+    textureImage.view = textureObj.view;
+    textureImage.sampler = NULL;
     
     lreTransitionImageLayout(device,commandPool,graphicsQueue,textureImage.image,VK_FORMAT_R8G8B8A8_SRGB,VK_IMAGE_LAYOUT_UNDEFINED,VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
     
@@ -340,6 +345,52 @@ LreTextureImageObject lreCreateTextureImage2D(VkDevice device,VkPhysicalDevice p
 
     return textureImage;
 }
+
+static inline VkFormat lreFindSupportedDepthFormats(VkPhysicalDevice physicalDevice,const VkFormat* candidates,uint32_t candidateSize, VkImageTiling tiling, VkFormatFeatureFlags features) {
+    for (int i = 0; i < candidateSize; i++) {
+        VkFormatProperties props;
+        vkGetPhysicalDeviceFormatProperties(physicalDevice, candidates[i], &props);
+
+        if (tiling == VK_IMAGE_TILING_LINEAR && (props.linearTilingFeatures & features) == features) {
+            return candidates[i];
+        } else if (tiling == VK_IMAGE_TILING_OPTIMAL && (props.optimalTilingFeatures & features) == features) {
+            return candidates[i];
+        }
+    }
+
+    LOGTOFILE(LOG_LEVEL_ERROR,"Failed to find supported stencil format");
+    return VK_FORMAT_UNDEFINED;
+}
+
+VkFormat lreFindSupportedDepthFormat(VkPhysicalDevice physicalDevice) {
+    VkFormat candidates[] = {VK_FORMAT_D32_SFLOAT, VK_FORMAT_D32_SFLOAT_S8_UINT, VK_FORMAT_D24_UNORM_S8_UINT};
+    return lreFindSupportedDepthFormats(physicalDevice,candidates,3,VK_IMAGE_TILING_OPTIMAL,VK_FORMAT_FEATURE_DEPTH_STENCIL_ATTACHMENT_BIT);
+}
+
+LreTextureObject lreCreateDepthResources(VkDevice device,VkPhysicalDevice physicalDevice,LreSwapChain swapChain) {
+    VkFormat depthFormat = lreFindSupportedDepthFormat(physicalDevice);
+    VkImageCreateInfo imageInfo; memset(&imageInfo,0,sizeof(imageInfo));
+    imageInfo.sType = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO;
+    imageInfo.imageType = VK_IMAGE_TYPE_2D;
+    imageInfo.extent.width = swapChain.extent.width;
+    imageInfo.extent.height = swapChain.extent.height;
+    imageInfo.extent.depth = 1;
+    imageInfo.mipLevels = 1;
+    imageInfo.arrayLayers = 1;
+    imageInfo.format = depthFormat;
+    imageInfo.tiling = VK_IMAGE_TILING_OPTIMAL;
+    imageInfo.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
+    imageInfo.usage = VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT;
+    imageInfo.samples = VK_SAMPLE_COUNT_1_BIT;
+    imageInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
+    
+    LreTextureObject textureObject = lreCreateTexture(device,physicalDevice,imageInfo);
+    textureObject.view = lreCreateImageView(device,textureObject.image,depthFormat,VK_IMAGE_VIEW_TYPE_2D,VK_IMAGE_ASPECT_DEPTH_BIT);
+    //maybe transition the image here
+    return textureObject;
+}
+
+
 
 
 #endif

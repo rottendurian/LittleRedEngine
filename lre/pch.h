@@ -13,6 +13,8 @@
 
 #include "logging/logging.h"
 
+#include "lre_types.h"
+
 #ifndef NDEBUG
     #define LOGMEMORYALLOCATIONS
     #include "memory/memlog.h"

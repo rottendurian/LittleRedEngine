@@ -3,14 +3,6 @@
 
 #include "pch.h"
 
-typedef struct LreWindow {
-    GLFWwindow* window;
-    int width;
-    int height;
-    const char* name;
-    int frameBufferResized;
-} LreWindow; 
-
 LreWindow lreCreateWindow(int width, int height, const char* name);
 void lreDestroyWindow(LreWindow* LreWindow);
 

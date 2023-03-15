@@ -1,3 +1,4 @@
+#define CGLM_FORCE_DEPTH_ZERO_TO_ONE
 #include "cglm/cglm.h"
 
 #include "lre_vertex.h"
@@ -14,7 +15,7 @@ typedef struct UniformBufferObject {
     mat4 proj;
 } UniformBufferObject;
 
-static void updateUBOs(lreVulkanObject* vulkanObject,LreUniformBufferObject* uniforms,uint32_t currentFrame) {
+static void updateUBOs(LreVulkanObject* vulkanObject,LreUniformBufferObject* uniforms,uint32_t currentFrame) {
     double time = glfwGetTime();
     UniformBufferObject ubo; memset(&ubo,0,sizeof(ubo));
     glm_mat4_identity(ubo.model);
@@ -29,7 +30,7 @@ int main() {
     log_setup();
     LOGSELECTFILE("stderr.log");
 
-    lreVulkanObject vulkanObject;
+    LreVulkanObject vulkanObject;
     vulkanObject.window = createWindow(50,50,"hello world");     
     vulkanObject.instance = createInstance("[LRE] Little Red Engine",VK_MAKE_VERSION(1,0,0),"application",VK_MAKE_VERSION(1,0,0));
     vulkanObject.debugger = createDebugMessenger(vulkanObject);
@@ -73,7 +74,9 @@ int main() {
 
     lreDestroyVertexInputDescriptions(&vertexInputDescriptions);
 
-    vulkanObject.frameBuffer = createFrameBuffer(vulkanObject);
+    vulkanObject.depthImage = lreCreateDepthResources(vulkanObject.device,vulkanObject.physicalDevice,vulkanObject.lreSwapChain);
+    vulkanObject.frameBuffer = lreCreateFrameBuffer(vulkanObject.device,vulkanObject.lreSwapChain,&vulkanObject.lreSwapChainImages,vulkanObject.renderPass,vulkanObject.depthImage);
+
     vulkanObject.commandPool = createCommandPool(vulkanObject);
 
     const Vertex vertices[] = {
@@ -153,6 +156,7 @@ int main() {
     lreDestroyTextureImage(vulkanObject.device,textureImage);
 
     destroyCommandPool(vulkanObject);
+    lreDestroyTexture(vulkanObject.device,vulkanObject.depthImage);
     destroyFrameBuffer(vulkanObject);
     destroyGraphicsPipeline(vulkanObject);
     destroyGraphicsPipelineLayout(vulkanObject);

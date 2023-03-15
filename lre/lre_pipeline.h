@@ -16,18 +16,7 @@
 //     VkPipelineColorBlendStateCreateInfo colorBlending;
 // } LreFixedFunctions;
 
-typedef struct LreDescriptorPool {
-    VkDescriptorSetLayout descriptorSetLayout;
-    VkDescriptorPool descriptorPool;
-    VkDescriptorSet* descriptorSets;
-} LreDescriptorPool;
 
-typedef struct LreVertexInputDescriptions {
-    VkVertexInputBindingDescription* bindingDescriptions;
-    uint32_t bindingDescriptionCount;
-    VkVertexInputAttributeDescription* attributeDescriptions;
-    uint32_t attributeDescriptionCount;
-} LreVertexInputDescriptions;
 
 static inline void lreDestroyVertexInputDescriptions(LreVertexInputDescriptions* vertexInputDescriptions) {
     free(vertexInputDescriptions->bindingDescriptions);
@@ -50,7 +39,7 @@ static inline void lreDestroyDescriptorPool(VkDevice device,LreDescriptorPool po
     free(pool.descriptorSets);
 }
 
-VkRenderPass lreCreateRenderPass(VkDevice device,VkFormat swapChainImageFormat);
+VkRenderPass lreCreateRenderPass(VkDevice device,VkPhysicalDevice physicalDevice,VkFormat swapChainImageFormat);
 static inline void lreDestroyRenderPass(VkDevice device,VkRenderPass renderPass) {vkDestroyRenderPass(device, renderPass, NULL);}
 
 VkPipelineLayout lreCreateGraphicsPipelineLayout(VkDevice device,VkDescriptorSetLayout* descriptorSetLayout,uint32_t descriptorSetLayoutCount);
