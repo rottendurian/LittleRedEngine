@@ -4,18 +4,12 @@
 #include <stdio.h>
 #include <string.h>
 
-#ifndef HASHTABLE_EXPANSIONS
-    #define HASHTABLE_EXPANSION(name,arg) name##arg
-    #define _HASHTABLE_EXPANSION(name,arg) _##name##arg
-    #define HASHTABLE_EXPANSION_I(name,arg) HASHTABLE_EXPANSION(name,arg)
-    #define _HASHTABLE_EXPANSION_I(name,arg) _HASHTABLE_EXPANSION(name,arg)
-#endif
-
 #ifdef HASHTABLE_STATIC
     #define HASHTABLE_STATIC_IMPL static inline
     #define HASHTABLE_IMPLEMENTATION
 #else
     #define HASHTABLE_STATIC_IMPL
+    #undef HASHTABLE_IMPLEMENTATION
 #endif
 
 #ifndef HASHTABLE_USIZE
@@ -70,6 +64,11 @@
 #ifndef HASHTABLE_FREE
 #define HASHTABLE_FREE HASHTABLE_NULL
 #endif
+
+#define HASHTABLE_EXPANSION(name,arg) name##arg
+#define _HASHTABLE_EXPANSION(name,arg) _##name##arg
+#define HASHTABLE_EXPANSION_I(name,arg) HASHTABLE_EXPANSION(name,arg)
+#define _HASHTABLE_EXPANSION_I(name,arg) _HASHTABLE_EXPANSION(name,arg)
 
 #define HASHTABLE_METADATA HASHTABLE_EXPANSION_I(HASHTABLE_NAME,_metadata)
 #define HASHTABLE_BYTES HASHTABLE_EXPANSION_I(HASHTABLE_NAME,_bytes)
@@ -146,7 +145,7 @@ HASHTABLE_STATIC_IMPL HASHTABLE_NAME* HASHTABLE_NEW() {
 HASHTABLE_STATIC_IMPL HASHTABLE_NAME* HASHTABLE_NEW_WITH_SIZE(HASHTABLE_USIZE size) { 
     HASHTABLE_USIZE byte_size = HASHTABLE_BYTES(size); 
     HASHTABLE_NAME* table = (HASHTABLE_NAME*)malloc(byte_size); 
-    table->mem_size = size;
+    table->mem_size = size; 
     memset(((char*)table)+sizeof(HASHTABLE_USIZE),HASHTABLEDEFAULTFILLVALUE,byte_size-sizeof(HASHTABLE_USIZE)); 
     return table; 
 } 
@@ -162,9 +161,6 @@ static inline void HASHTABLE_SET(HASHTABLE_NAME* table, HASHTABLE_USIZE index, H
 
 
 HASHTABLE_STATIC_IMPL HASHTABLE_NAME* HASHTABLE_INSERT(HASHTABLE_NAME* table,HASHTABLE_KEYTYPE key, HASHTABLE_DATATYPE data) { 
-#ifdef HASHTABLE_LOG_STUFF
-    printf("inserting key {%zu}\n",key);
-#endif
     if (HASHTABLE_COMPARE(key, HASHTABLEDEFAULTTYPEVALUE)) {fprintf(stderr,"[hashtable insert] Reserved key, value not enteredn"); return table;} 
     if (table->mem_size < HASHTABLE_INTERNAL_PRIMES_MAX && (table->item_count > ((float)HASHTABLE_INTERNAL_PRIMES[table->mem_size])*0.6)) 
         table = HASHTABLE_RESIZE(table,true); 
@@ -223,16 +219,13 @@ HASHTABLE_STATIC_IMPL HASHTABLE_NAME* HASHTABLE_RESIZE(HASHTABLE_NAME* table,boo
     HASHTABLE_NAME* newTable; 
     if (grow == true) newTable = HASHTABLE_NEW_WITH_SIZE(table->mem_size+1); 
     else newTable = HASHTABLE_NEW_WITH_SIZE(table->mem_size-1); 
-#ifdef HASHTABLE_LOG_STUFF
-    printf("resizing\n");
-#endif
+    
       
     HASHTABLE_METADATA* iter; 
     for (HASHTABLE_USIZE i = 0; i < HASHTABLE_INTERNAL_PRIMES[table->mem_size]; i++) { 
         iter = HASHTABLE_GET(table,i); 
-        if (!HASHTABLE_COMPARE(iter->key, HASHTABLEDEFAULTTYPEVALUE)) {
-            newTable = HASHTABLE_INSERT(newTable,iter->key,iter->data);
-        } 
+        if (!HASHTABLE_COMPARE(iter->key, HASHTABLEDEFAULTTYPEVALUE)) 
+            newTable = HASHTABLE_INSERT(newTable,iter->key,iter->data); 
     } 
     free(table); 
     return newTable; 

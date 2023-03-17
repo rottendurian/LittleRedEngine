@@ -4,58 +4,22 @@
 #include "lre_vertex.h"
 #include "lre_object.h"
 #include "fast_obj.h"
-#include "array/array.h"
-#define HASHTABLEDEFAULTFILLVALUE 0
-#define HASHTABLEDEFAULTTYPEVALUE (Vertex){{0.0f,0.0f,0.0f},{0.0f,0.0f,0.0f},{0.0f,0.0f}}
-#include "hashtable/hashtable.h"
 
-static inline size_t VertexHash(Vertex vertex) {
-    const size_t prime = 0x01000193; // prime number for FNV-1a
-    size_t hash = 0x811c9dc5; // FNV-1a offset basis
+//LreInstanceClass
+//LreSwapchainClass
+//LreRenderPassClass
+//LreDrawClass?
 
-    // Hash the pos field
-    hash = (hash ^ *(const uint32_t*)&vertex.pos[0]) * prime;
-    hash = (hash ^ *(const uint32_t*)&vertex.pos[1]) * prime;
-    hash = (hash ^ *(const uint32_t*)&vertex.pos[2]) * prime;
-
-    // Hash the color field
-    hash = (hash ^ *(const uint32_t*)&vertex.color[0]) * prime;
-    hash = (hash ^ *(const uint32_t*)&vertex.color[1]) * prime;
-    hash = (hash ^ *(const uint32_t*)&vertex.color[2]) * prime;
-
-    // Hash the texCoord field
-    hash = (hash ^ *(const uint32_t*)&vertex.texCoord[0]) * prime;
-    hash = (hash ^ *(const uint32_t*)&vertex.texCoord[1]) * prime;
-
-    return (size_t)hash;
-}
-
-static inline bool VertexCmp(Vertex v1,Vertex v2) {
-    // Vertex vertex = v1;
-    // fprintf(stdout,"p{%f,%f,%f},c{%f,%f,%f},t{%f,%f} ==",vertex.pos[0],vertex.pos[1],vertex.pos[2],vertex.color[0],vertex.color[1],vertex.color[2],vertex.texCoord[0],vertex.texCoord[1]);
-    // vertex = v2;
-    // fprintf(stdout,"p{%f,%f,%f},c{%f,%f,%f},t{%f,%f}\n",vertex.pos[0],vertex.pos[1],vertex.pos[2],vertex.color[0],vertex.color[1],vertex.color[2],vertex.texCoord[0],vertex.texCoord[1]);
-    int posComparison = memcmp(&v1.pos, &v2.pos, sizeof(vec3));
-    if (posComparison != 0) {
-        return !posComparison;
-    }
-
-    int colorComparison = memcmp(&v1.color, &v2.color, sizeof(vec3));
-    if (colorComparison != 0) {
-        return !colorComparison;
-    }
-
-    return !memcmp(&v1.texCoord, &v2.texCoord, sizeof(vec2));
-}
-
-array(Vertex,0);
-array(uint32_t,0);
-hashtable(Vertex,uint32_t,VertexHash,VertexCmp,HASHNULL);
-
-
+//Need to identify common data so I don't have to rehash a lot of it
+//ObjModel class
 
 //TODO
-//MODEL LOADING
+//Lighting
+//multisampling
+//antialiasing
+//compute shaders
+//abstractions
+
 
 typedef struct UniformBufferObject {
     mat4 model;
@@ -78,16 +42,20 @@ int main() {
     log_setup();
     LOGSELECTFILE("stderr.log");
     freopen("stderr.log","w",stderr);
+    double beforeModel = glfwGetTime();
 
     fastObjMesh* mesh = fast_obj_read("res/meshes/vikingroom/viking_room.obj");
+    printf("Group count: %lu\n",mesh->group_count);
 
+    
     array_Vertex* mvertices = array_Vertex_new(50);
     array_uint32_t* mindices = array_uint32_t_new(50);
-    hashtable_Vertex* hashtableVertices = hashtable_Vertex_create();
+    hashtable_Vertex* hashtableVertices = hashtable_Vertex_new();
 
     for (uint32_t i = 0; i < mesh->group_count; i++) {
         const fastObjGroup group = mesh->groups[i];
-        //idk
+        
+        printf("Group[%lu] name: %s",i,group.name);
 
         int idx = 0;
         for (uint32_t j = 0; j < group.face_count; j++) {
@@ -108,7 +76,7 @@ int main() {
                 vertex.texCoord[0] = mesh->texcoords[2 * mi.t + 0];
                 vertex.texCoord[1] = 1.0f - mesh->texcoords[2 * mi.t + 1];
 
-                hashtable_Vertex_meta* meta = hashtable_Vertex_get(hashtableVertices,vertex);
+                hashtable_Vertex_metadata* meta = hashtable_Vertex_get(hashtableVertices,vertex);
                 // printf("found tag %zu\n",(size_t)meta);
 
                 if (meta == NULL) {
@@ -125,90 +93,50 @@ int main() {
         }
 
     }
+    double afterModel = glfwGetTime();
+    printf("After model, %lf\n",afterModel-beforeModel);
     
-    printf("hashtable size %zu",hashtableVertices->item_count);
+    printf("hashtable size %zu\n",hashtableVertices->item_count);
     hashtable_Vertex_cleanup(hashtableVertices);
     // for (int i = 0; i < mindices->items; i++) {
     //     fprintf(stdout,"%lu,",*_array_uint32_t_get(mindices,i));
     // }
-    fprintf(stdout,"indices size %zu\n",mindices->items);
+    fprintf(stdout,"indices size %lu\n",mindices->items);
 
     // for (int i = 0; i < mvertices->items/4; i++) {
     //     Vertex vertex = *_array_Vertex_get(mvertices,i);
     //     fprintf(stdout,"p{%f,%f,%f},t{%f,%f}\n",vertex.pos[0],vertex.pos[1],vertex.pos[2],vertex.texCoord[0],vertex.texCoord[1]);
     // }
-    fprintf(stdout,"vertices size %zu\n",mvertices->items);
+    fprintf(stdout,"vertices size %lu\n",mvertices->items);
 
     // exit(EXIT_SUCCESS);
 
+//instance
     LreVulkanObject vulkanObject;
     vulkanObject.window = createWindow(50,50,"hello world");     
     vulkanObject.instance = createInstance("[LRE] Little Red Engine",VK_MAKE_VERSION(1,0,0),"application",VK_MAKE_VERSION(1,0,0));
     vulkanObject.debugger = createDebugMessenger(vulkanObject);
-    
     vulkanObject.surface = createSurface(vulkanObject);
+    
     vulkanObject.physicalDevice = pickPhysicalDevice(vulkanObject);
-
     vulkanObject.device = createLogicalDevice(vulkanObject);
-    vulkanObject.graphicsQueue = getGraphicsQueue(vulkanObject);
-    vulkanObject.presentQueue = getPresentQueue(vulkanObject);
-    
-    vulkanObject.lreSwapChain = createSwapChain(vulkanObject);
-    vulkanObject.lreSwapChainImages = createImageViews(vulkanObject);
 
-    
-
-
-    vulkanObject.renderPass = createRenderPass(vulkanObject);
-    VkDescriptorSetLayoutBinding* bindings = (VkDescriptorSetLayoutBinding*)alloca(sizeof(VkDescriptorSetLayoutBinding)*2); memset(bindings,0,sizeof(bindings));
-    bindings[0].binding = 0;
-    bindings[0].descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
-    bindings[0].descriptorCount = 1;
-    bindings[0].stageFlags = VK_SHADER_STAGE_VERTEX_BIT;
-    bindings[0].pImmutableSamplers = NULL;
-
-    bindings[1].binding = 1;
-    bindings[1].descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
-    bindings[1].descriptorCount = 1;
-    bindings[1].stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT;
-    bindings[1].pImmutableSamplers = NULL;
-    
-    VkDescriptorSetLayout descriptorSetLayout = lreCreateDescriptorSetLayout(vulkanObject.device,bindings,2);
-    
-    vulkanObject.pipelineLayout = lreCreateGraphicsPipelineLayout(vulkanObject.device,&descriptorSetLayout,1);
-
-    LreVertexInputDescriptions vertexInputDescriptions;
-    vertexInputDescriptions.bindingDescriptions = VertexGetBindingDescription();
-    vertexInputDescriptions.bindingDescriptionCount = 1;
-    vertexInputDescriptions.attributeDescriptions = VertexGetAttributeDescriptions();
-    vertexInputDescriptions.attributeDescriptionCount = VERTEX_ATTRIB_COUNT;
-
-    vulkanObject.graphicsPipeline = lreCreateGraphicsPipeline(vulkanObject.device,vulkanObject.renderPass,vulkanObject.pipelineLayout,&vertexInputDescriptions,"res/shaders/simple_shader.vert.spv","res/shaders/simple_shader.frag.spv");
-
-    lreDestroyVertexInputDescriptions(&vertexInputDescriptions);
-
-    vulkanObject.depthImage = lreCreateDepthResources(vulkanObject.device,vulkanObject.physicalDevice,vulkanObject.lreSwapChain);
-    vulkanObject.frameBuffer = lreCreateFrameBuffer(vulkanObject.device,vulkanObject.lreSwapChain,&vulkanObject.lreSwapChainImages,vulkanObject.renderPass,vulkanObject.depthImage);
-
+//render
     vulkanObject.commandPool = createCommandPool(vulkanObject);
+    vulkanObject.commandBuffer = lreCreateDrawCommandBuffer(vulkanObject.device,vulkanObject.commandPool);
+    vulkanObject.syncObjects = lreCreateSyncObjects(vulkanObject.device);
 
-    // const Vertex vertices[] = {
-    //     {{-0.5f, -0.5f,0.0f}, {1.0f, 0.0f, 0.0f}, {1.0f, 0.0f}},
-    //     {{0.5f, -0.5f,0.0f}, {0.0f, 1.0f, 0.0f}, {0.0f, 0.0f}},
-    //     {{0.5f, 0.5f,0.0f}, {0.0f, 0.0f, 1.0f}, {0.0f, 1.0f}},
-    //     {{-0.5f, 0.5f,0.0f}, {1.0f, 1.0f, 1.0f}, {1.0f, 1.0f}},
 
-    //     {{-0.5f, -0.5f, -0.5f}, {1.0f, 0.0f, 0.0f}, {0.0f, 0.0f}},
-    //     {{0.5f, -0.5f, -0.5f}, {0.0f, 1.0f, 0.0f}, {1.0f, 0.0f}},
-    //     {{0.5f, 0.5f, -0.5f}, {0.0f, 0.0f, 1.0f}, {1.0f, 1.0f}},
-    //     {{-0.5f, 0.5f, -0.5f}, {1.0f, 1.0f, 1.0f}, {0.0f, 1.0f}}
-    // };
+//swapchain
+    vulkanObject.graphicsQueue = lreGetGraphicsQueue(vulkanObject.physicalDevice,vulkanObject.device,vulkanObject.surface);
+    vulkanObject.presentQueue = lreGetPresentQueue(vulkanObject.physicalDevice,vulkanObject.device,vulkanObject.surface);
+    
+    vulkanObject.lreSwapChain = lreCreateSwapChain(&vulkanObject.window,vulkanObject.surface,vulkanObject.device,vulkanObject.physicalDevice);
+    vulkanObject.lreSwapChainImages = lreCreateSwapchainImageViews(vulkanObject.device,&vulkanObject.lreSwapChain);
+    vulkanObject.depthImage = lreCreateDepthResources(vulkanObject.device,vulkanObject.physicalDevice,vulkanObject.lreSwapChain);
 
-    // const uint32_t indices[] = {
-    //     0,1,2,2,3,0,
-    //     4,5,6,6,7,4
-    // };
 
+//upload data?
     Vertex* vertices = _array_Vertex_get(mvertices,0);
     uint32_t* indices = _array_uint32_t_get(mindices,0);
     VkDeviceSize verticesSize = mvertices->items*sizeof(Vertex);
@@ -228,10 +156,41 @@ int main() {
     }
     LreTextureImageObject textureImage = lreCreateTextureImage2D(vulkanObject.device,vulkanObject.physicalDevice,vulkanObject.commandPool,vulkanObject.graphicsQueue,"res/meshes/vikingroom/viking_room.png");
 
+//renderpass (descriptorSetBindings, vertexInput, indexInput, )
+
+    VkDescriptorSetLayoutBinding* descriptorBindings = (VkDescriptorSetLayoutBinding*)alloca(sizeof(VkDescriptorSetLayoutBinding)*2);
+    descriptorBindings[0].binding = 0;
+    descriptorBindings[0].descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+    descriptorBindings[0].descriptorCount = 1;
+    descriptorBindings[0].stageFlags = VK_SHADER_STAGE_VERTEX_BIT;
+    descriptorBindings[0].pImmutableSamplers = NULL;
+
+    descriptorBindings[1].binding = 1;
+    descriptorBindings[1].descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+    descriptorBindings[1].descriptorCount = 1;
+    descriptorBindings[1].stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT;
+    descriptorBindings[1].pImmutableSamplers = NULL;
+    
+    LreVertexInputDescriptions vertexInputDescriptions;
+    vertexInputDescriptions.bindingDescriptions = VertexGetBindingDescription();
+    vertexInputDescriptions.bindingDescriptionCount = 1;
+    vertexInputDescriptions.attributeDescriptions = VertexGetAttributeDescriptions();
+    vertexInputDescriptions.attributeDescriptionCount = VERTEX_ATTRIB_COUNT;
+    
+
+    VkDescriptorSetLayout descriptorSetLayout = lreCreateDescriptorSetLayout(vulkanObject.device,descriptorBindings,2);
+    
+    vulkanObject.renderPass = createRenderPass(vulkanObject);
+    vulkanObject.pipelineLayout = lreCreateGraphicsPipelineLayout(vulkanObject.device,&descriptorSetLayout,1);
+    vulkanObject.graphicsPipeline = lreCreateGraphicsPipeline(vulkanObject.device,vulkanObject.renderPass,vulkanObject.pipelineLayout,&vertexInputDescriptions,"res/shaders/simple_shader.vert.spv","res/shaders/simple_shader.frag.spv");
+    vulkanObject.frameBuffer = lreCreateFrameBuffer(vulkanObject.device,vulkanObject.lreSwapChain,&vulkanObject.lreSwapChainImages,vulkanObject.renderPass,vulkanObject.depthImage);
+
+    lreDestroyVertexInputDescriptions(&vertexInputDescriptions);
+
+
     LreDescriptorPool descriptorPool = lreCreateDescriptorPool(vulkanObject.device,descriptorSetLayout,MAX_FRAMES_IN_FLIGHT,2,VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,uniformBuffers,VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER,&textureImage);
     
-    vulkanObject.commandBuffer = lreCreateDrawCommandBuffer(vulkanObject.device,vulkanObject.commandPool);
-    vulkanObject.syncObjects = lreCreateSyncObjects(vulkanObject.device);
+    
 
     uint32_t currentFrame = 0;
     glfwSetWindowUserPointer(vulkanObject.window.window,&vulkanObject.window);
@@ -256,28 +215,16 @@ int main() {
     drawInfo.clearColorCount = sizeof(clearColor)/sizeof(clearColor[0]);
     drawInfo.clearColor = clearColor;
 
-    double time = glfwGetTime();
-    double prevTime = time;
-    int framecount = 0;
-    double deltaTime = 0;
-
+    
     while (!lreWindowShouldClose(&vulkanObject.window)) {
-        prevTime = time;
-        time = glfwGetTime();
-        deltaTime += (time-prevTime);
-        framecount++;
-        if (framecount >= 2000) {
-            printf("FPS %lf \n",1.0/(deltaTime/(double)framecount));
-            framecount = 0;
-            deltaTime = 0.0;
-        }
-        
         glfwPollEvents();
         updateUBOs(&vulkanObject,uniformBuffers,currentFrame);
         lreDrawFrame(&vulkanObject,currentFrame,&drawInfo);
         currentFrame = (currentFrame + 1) % MAX_FRAMES_IN_FLIGHT;
     }
     vkDeviceWaitIdle(vulkanObject.device);
+
+
 
     destroySyncObjects(vulkanObject);
     destroyCommandBuffers(vulkanObject);
@@ -288,7 +235,7 @@ int main() {
     lreDestroyBuffer(vulkanObject.device,indexBuffer);
     array_uint32_t_cleanup(mindices);
     array_Vertex_cleanup(mvertices);
-    
+
     for (int i = 0; i < MAX_FRAMES_IN_FLIGHT; i++) {
         lreDestroyUniformBuffer(vulkanObject.device,uniformBuffers[i]);
     }

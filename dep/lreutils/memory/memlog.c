@@ -5,8 +5,8 @@
 #include <memory.h>
 #include <malloc.h>
 #include <stdlib.h>
+#include <stdbool.h>
 
-#include "../hashtable/hashset.h"
 #include "../hashtable/hashfunctions.h"
 
 #include <stdarg.h>
@@ -75,7 +75,20 @@ static size_t hashFunction(size_t x) {
 
 static bool hashset_cmp(size_t x, size_t y) {return x == y;}
 
-hashset(size_t,jenkins_hash,hashset_cmp,SETNOTHEAP);
+// #define HASHTABLE_LOG_STUFF
+#define HASHSET_DEFAULT_FILL_VALUE 0
+#define HASHSET_DEFAULT_TYPE_VALUE 0
+#define HASHSET_STATIC
+#define HASHSET_NAME hashset_size_t
+#define HASHSET_KEYTYPE size_t
+// #define HASHSET_DATATYPE size_t
+#define HASHSET_USIZE size_t
+#define HASHSET_HASHFUNC jenkins_hash
+#define HASHSET_COMPARE hashset_cmp
+#include "../hashtable/hashset.h"
+
+#define HASHSETDEFAULTTYPEVALUE 0
+// hashset(size_t,jenkins_hash,hashset_cmp,SETNOTHEAP);
 
 static char are_logs_setup = 0;
 static hashset_size_t* table;
@@ -83,7 +96,7 @@ static hashset_size_t* table;
 void log_setup() {
     are_logs_setup = 1;
     LOGSELECTFILE("memlog.log");
-    table = hashset_size_t_create();
+    table = hashset_size_t_new();
 }
 
 void* log_malloc(size_t size,char* file,int line) {
@@ -111,7 +124,7 @@ void log_free(void* data,char* file,int line) {
 
 void* log_realloc(void* prev,size_t size, char* file, int line) {
     LOGINFO(LOG_LEVEL_DEBUG,file,line,"Removing (%llu) to realloc",(size_t)prev);
-    hashset_size_t_remove(table,(size_t)prev);
+    table = hashset_size_t_remove(table,(size_t)prev);
     void* memory = realloc(prev,size);
     if (memory == NULL) {
         LOGINFO(LOG_LEVEL_WARNING,file,line,"Failed to realloc memory");
@@ -125,11 +138,12 @@ void* log_realloc(void* prev,size_t size, char* file, int line) {
 
 void log_cleanup() {
     if (table == NULL) return;
-    size_t size = set_internal_primes[table->mem_size]; 
-    hashset_size_t_meta* meta;
+    size_t size = HASHSET_INTERNAL_PRIMES_size_t[table->mem_size];//hashtable_internal_primes[table->mem_size];  
+    hashset_size_t_metadata* meta;
     for (size_t i = 0; i < size; i++) { 
-        meta = _hashset_size_t_get(table,i); 
-        if (meta->key != HASHTABLEDEFAULTVALUE) {
+        meta = _hashset_size_t_get(table,i);
+        // printf("key: %zu",meta->key);
+        if (!hashset_cmp(meta->key, HASHSETDEFAULTTYPEVALUE)) {
             LOGINFO(LOG_LEVEL_WARNING,"memlog.c",133,"Failed to free %llu",meta->key);
         }
     }

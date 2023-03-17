@@ -102,9 +102,21 @@ VkPhysicalDevice lrePickPhysicalDevice(VkInstance instance,VkSurfaceKHR surface)
     return physicalDevice;
 }
 
+// static inline bool hashset_uint32_compare_func(uint32_t x,uint32_t y) {
+//     return x == y;
+// }
+// #include "hashtable/hashfunctions.h"
+// #define HASHSET_STATIC
+// #define HASHSET_NAME hashset_uint32_t
+// #define HASHSET_KETTYPE uint32_t
+// #define HAHSET_USIZE uint32_t
+// #define HASHSET_HASHFUNC jenkins_uint32
+// #define HASHSET_COMPARE hashset_uint32_compare_func
+// #include "hashtable/hashset.h"
+
 // #include "lre_helper.h"
-#include "hashtable/hashset.h"
 #include "hashtable/hashfunctions.h"
+#include "hashtable/hashsetold.h"
 hashset(uint32_t,jenkins_uint32,default_compare,SETNOTHEAP);
 
 
