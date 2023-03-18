@@ -9,6 +9,8 @@
 #include <stb_image.h>
 #endif
 
+#include <math.h>
+
 static inline uint32_t findMemoryType(uint32_t typeFilter, VkMemoryPropertyFlags properties,VkPhysicalDevice physicalDevice) {
     VkPhysicalDeviceMemoryProperties memProperties;
     vkGetPhysicalDeviceMemoryProperties(physicalDevice, &memProperties);
@@ -132,7 +134,7 @@ LreTextureObject lreCreateTexture(VkDevice device,VkPhysicalDevice physicalDevic
 
 }
 
-void lreTransitionImageLayout(VkDevice device,VkCommandPool commandPool,VkQueue graphicsQueue,VkImage image,VkFormat format,VkImageLayout oldLayout,VkImageLayout newLayout) {
+void lreTransitionImageLayout(VkDevice device,VkCommandPool commandPool,VkQueue graphicsQueue,VkImage image,VkFormat format,VkImageLayout oldLayout,VkImageLayout newLayout,uint32_t mipLevels) {
     VkCommandBuffer commandBuffer = lreBeginSingleTimeCommands(device,commandPool);
 
     VkImageMemoryBarrier barrier; memset(&barrier,0,sizeof(barrier));
@@ -145,7 +147,7 @@ void lreTransitionImageLayout(VkDevice device,VkCommandPool commandPool,VkQueue 
     barrier.image = image;
     barrier.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
     barrier.subresourceRange.baseMipLevel = 0;
-    barrier.subresourceRange.levelCount = 1;
+    barrier.subresourceRange.levelCount = mipLevels;
     barrier.subresourceRange.baseArrayLayer = 0;
     barrier.subresourceRange.layerCount = 1;
 
@@ -183,37 +185,37 @@ void lreTransitionImageLayout(VkDevice device,VkCommandPool commandPool,VkQueue 
     lreEndSingleTimeCommands(device,graphicsQueue,commandPool,commandBuffer);
 }
 
-void lreCopyBufferToImage2D(VkDevice device,VkCommandPool commandPool,VkQueue graphicsQueue,VkBuffer buffer,VkImage image,uint32_t width,uint32_t height) {
-    VkCommandBuffer commandBuffer = lreBeginSingleTimeCommands(device,commandPool);
+// void lreCopyBufferToImage2D(VkDevice device,VkCommandPool commandPool,VkQueue graphicsQueue,VkBuffer buffer,VkImage image,uint32_t width,uint32_t height) {
+//     VkCommandBuffer commandBuffer = lreBeginSingleTimeCommands(device,commandPool);
 
-    VkBufferImageCopy region; memset(&region,0,sizeof(region));
-    region.bufferOffset = 0;
-    region.bufferRowLength = 0;
-    region.bufferImageHeight = 0;
+//     VkBufferImageCopy region; memset(&region,0,sizeof(region));
+//     region.bufferOffset = 0;
+//     region.bufferRowLength = 0;
+//     region.bufferImageHeight = 0;
 
-    region.imageSubresource.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
-    region.imageSubresource.mipLevel = 0;
-    region.imageSubresource.baseArrayLayer = 0;
-    region.imageSubresource.layerCount = 1;
+//     region.imageSubresource.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+//     region.imageSubresource.mipLevel = 0;
+//     region.imageSubresource.baseArrayLayer = 0;
+//     region.imageSubresource.layerCount = 1;
 
-    region.imageOffset = (VkOffset3D){0, 0, 0};
-    region.imageExtent = (VkExtent3D){
-        width,
-        height,
-        1
-    };
+//     region.imageOffset = (VkOffset3D){0, 0, 0};
+//     region.imageExtent = (VkExtent3D){
+//         width,
+//         height,
+//         1
+//     };
 
-    vkCmdCopyBufferToImage(
-        commandBuffer,
-        buffer,
-        image,
-        VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
-        1,
-        &region
-    );
+//     vkCmdCopyBufferToImage(
+//         commandBuffer,
+//         buffer,
+//         image,
+//         VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
+//         1,
+//         &region
+//     );
 
-    lreEndSingleTimeCommands(device,graphicsQueue,commandPool,commandBuffer);
-}
+//     lreEndSingleTimeCommands(device,graphicsQueue,commandPool,commandBuffer);
+// }
 
 void lreCopyBufferToImage(VkDevice device,VkCommandPool commandPool,VkQueue graphicsQueue,VkBuffer buffer,VkImage image,VkExtent3D imageSize,VkImageAspectFlags aspectFlags) {
     VkCommandBuffer commandBuffer = lreBeginSingleTimeCommands(device,commandPool);
@@ -243,7 +245,7 @@ void lreCopyBufferToImage(VkDevice device,VkCommandPool commandPool,VkQueue grap
     lreEndSingleTimeCommands(device,graphicsQueue,commandPool,commandBuffer);
 }
 
-VkImageView lreCreateImageView(VkDevice device, VkImage image, VkFormat format, VkImageViewType viewType,VkImageAspectFlags aspectFlags) {
+VkImageView lreCreateImageView(VkDevice device, VkImage image, VkFormat format, VkImageViewType viewType,VkImageAspectFlags aspectFlags,uint32_t mipLevels) {
     VkImageViewCreateInfo viewInfo; memset(&viewInfo,0,sizeof(viewInfo));
     viewInfo.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
     viewInfo.image = image;
@@ -252,7 +254,7 @@ VkImageView lreCreateImageView(VkDevice device, VkImage image, VkFormat format, 
     
     viewInfo.subresourceRange.aspectMask = aspectFlags;
     viewInfo.subresourceRange.baseMipLevel = 0;
-    viewInfo.subresourceRange.levelCount = 1;
+    viewInfo.subresourceRange.levelCount = mipLevels;
     viewInfo.subresourceRange.baseArrayLayer = 0;
     viewInfo.subresourceRange.layerCount = 1;
 
@@ -268,8 +270,8 @@ VkImageView lreCreateImageView(VkDevice device, VkImage image, VkFormat format, 
     return imageView;
 }
 
-VkImageView lreCreateImageView2D(VkDevice device,VkImage image,VkFormat format) {
-    return lreCreateImageView(device,image,format,VK_IMAGE_VIEW_TYPE_2D,VK_IMAGE_ASPECT_COLOR_BIT);
+VkImageView lreCreateImageView2D(VkDevice device,VkImage image,VkFormat format,uint32_t mipLevels) {
+    return lreCreateImageView(device,image,format,VK_IMAGE_VIEW_TYPE_2D,VK_IMAGE_ASPECT_COLOR_BIT,mipLevels);
 }
 
 /*@mFilter - VK_FILTER_NEAREST/VK_FILTER_LINEAR
@@ -310,7 +312,7 @@ VkSampler lreCreateSampler2D(VkDevice device,VkPhysicalDevice physicalDevice,VkF
     samplerInfo.mipmapMode = VK_SAMPLER_MIPMAP_MODE_LINEAR;
     samplerInfo.mipLodBias = 0.0f;
     samplerInfo.minLod = 0.0f;
-    samplerInfo.maxLod = 0.0f;
+    samplerInfo.maxLod = VK_LOD_CLAMP_NONE; //IDK MAN I THINK THIS IS RIGHT
 
     VkSampler sampler;
     if (vkCreateSampler(device, &samplerInfo, NULL, &sampler) != VK_SUCCESS) {
@@ -324,6 +326,8 @@ LreTextureImageObject lreCreateTextureImage2D(VkDevice device,VkPhysicalDevice p
     int texWidth, texHeight, texChannels;
     stbi_uc* pixels = stbi_load(filepath, &texWidth, &texHeight, &texChannels, STBI_rgb_alpha);
     VkDeviceSize imageSize = texWidth * texHeight * 4;
+    
+    uint32_t mipLevels = (uint32_t)(floor(log2(fmax(texWidth, texHeight)))) + 1;
 
     if (!pixels) {
         LOGTOFILE(LOG_LEVEL_ERROR,"[STB_IMAGE] failed to load texture image!");
@@ -340,12 +344,12 @@ LreTextureImageObject lreCreateTextureImage2D(VkDevice device,VkPhysicalDevice p
     imageInfo.extent.width = (uint32_t)texWidth;
     imageInfo.extent.height = (uint32_t)texHeight;
     imageInfo.extent.depth = 1;
-    imageInfo.mipLevels = 1;
+    imageInfo.mipLevels = mipLevels;
     imageInfo.arrayLayers = 1;
     imageInfo.format = VK_FORMAT_R8G8B8A8_SRGB;
     imageInfo.tiling = VK_IMAGE_TILING_OPTIMAL;
     imageInfo.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
-    imageInfo.usage = VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT;
+    imageInfo.usage = VK_IMAGE_USAGE_TRANSFER_SRC_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT;
     
     imageInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
 
@@ -359,19 +363,113 @@ LreTextureImageObject lreCreateTextureImage2D(VkDevice device,VkPhysicalDevice p
     textureImage.view = textureObj.view;
     textureImage.sampler = NULL;
     
-    lreTransitionImageLayout(device,commandPool,graphicsQueue,textureImage.image,VK_FORMAT_R8G8B8A8_SRGB,VK_IMAGE_LAYOUT_UNDEFINED,VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
+    lreTransitionImageLayout(device,commandPool,graphicsQueue,textureImage.image,VK_FORMAT_R8G8B8A8_SRGB,VK_IMAGE_LAYOUT_UNDEFINED,VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,mipLevels);
     
-    lreCopyBufferToImage2D(device,commandPool,graphicsQueue,stagingBuffer.buffer,textureImage.image,(uint32_t)texWidth,(uint32_t)texHeight);
-
-    lreTransitionImageLayout(device,commandPool,graphicsQueue,textureImage.image,VK_FORMAT_R8G8B8A8_SRGB,VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
+    lreCopyBufferToImage(device,commandPool,graphicsQueue,stagingBuffer.buffer,textureImage.image,(VkExtent3D){(uint32_t)texWidth,(uint32_t)texHeight,1},VK_IMAGE_ASPECT_COLOR_BIT);
 
     lreDestroyBuffer(device,stagingBuffer);
 
-    textureImage.view = lreCreateImageView2D(device,textureImage.image,VK_FORMAT_R8G8B8A8_SRGB);
+    if (mipLevels <= 1) {
+        lreTransitionImageLayout(device,commandPool,graphicsQueue,textureImage.image,VK_FORMAT_R8G8B8A8_SRGB,VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,mipLevels);
+    } else {
+        //todo implement mipmaps from files
+        lreGenerateMipmaps(device,physicalDevice,commandPool,graphicsQueue,textureImage.image,VK_FORMAT_R8G8B8A8_SRGB,texWidth,texHeight,mipLevels);
+    }
+
+
+    textureImage.view = lreCreateImageView2D(device,textureImage.image,VK_FORMAT_R8G8B8A8_SRGB,mipLevels);
 
     textureImage.sampler = lreCreateSampler2D(device,physicalDevice,VK_FILTER_NEAREST,VK_SAMPLER_ADDRESS_MODE_REPEAT);
 
     return textureImage;
+}
+
+void lreGenerateMipmaps(VkDevice device,VkPhysicalDevice physicalDevice,VkCommandPool commandPool,VkQueue graphicsQueue,VkImage image, VkFormat imageFormat, int32_t texWidth, int32_t texHeight, uint32_t mipLevels) {
+    // Check if image format supports linear blitting
+    VkFormatProperties formatProperties;
+    vkGetPhysicalDeviceFormatProperties(physicalDevice, imageFormat, &formatProperties);
+
+    if (!(formatProperties.optimalTilingFeatures & VK_FORMAT_FEATURE_SAMPLED_IMAGE_FILTER_LINEAR_BIT)) {
+        LOGTOFILE(LOG_LEVEL_ERROR,"texture image format does not support linear blitting!");
+    }
+
+
+    VkCommandBuffer commandBuffer = lreBeginSingleTimeCommands(device,commandPool);
+
+    VkImageMemoryBarrier barrier; memset(&barrier,0,sizeof(barrier));
+    barrier.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
+    barrier.image = image;
+    barrier.srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
+    barrier.dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
+    barrier.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+    barrier.subresourceRange.baseArrayLayer = 0;
+    barrier.subresourceRange.layerCount = 1;
+    barrier.subresourceRange.levelCount = 1;
+
+    int32_t mipWidth = texWidth;
+    int32_t mipHeight = texHeight;
+
+    for (uint32_t i = 1; i < mipLevels; i++) {
+        barrier.subresourceRange.baseMipLevel = i - 1;
+        barrier.oldLayout = VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL;
+        barrier.newLayout = VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL;
+        barrier.srcAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
+        barrier.dstAccessMask = VK_ACCESS_TRANSFER_READ_BIT;
+
+        vkCmdPipelineBarrier(commandBuffer,
+            VK_PIPELINE_STAGE_TRANSFER_BIT, VK_PIPELINE_STAGE_TRANSFER_BIT, 0,
+            0, NULL,
+            0, NULL,
+            1, &barrier);
+
+        VkImageBlit blit; memset(&blit,0,sizeof(blit));
+        blit.srcOffsets[0] = (VkOffset3D){ 0, 0, 0 };
+        blit.srcOffsets[1] = (VkOffset3D){ mipWidth, mipHeight, 1 };
+        blit.srcSubresource.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+        blit.srcSubresource.mipLevel = i - 1;
+        blit.srcSubresource.baseArrayLayer = 0;
+        blit.srcSubresource.layerCount = 1;
+        blit.dstOffsets[0] = (VkOffset3D){ 0, 0, 0 };
+        blit.dstOffsets[1] = (VkOffset3D){ mipWidth > 1 ? mipWidth / 2 : 1, mipHeight > 1 ? mipHeight / 2 : 1, 1 };
+        blit.dstSubresource.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+        blit.dstSubresource.mipLevel = i;
+        blit.dstSubresource.baseArrayLayer = 0;
+        blit.dstSubresource.layerCount = 1;
+
+        vkCmdBlitImage(commandBuffer,
+            image, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
+            image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
+            1, &blit,
+            VK_FILTER_LINEAR);
+
+        barrier.oldLayout = VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL;
+        barrier.newLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+        barrier.srcAccessMask = VK_ACCESS_TRANSFER_READ_BIT;
+        barrier.dstAccessMask = VK_ACCESS_SHADER_READ_BIT;
+
+        vkCmdPipelineBarrier(commandBuffer,
+            VK_PIPELINE_STAGE_TRANSFER_BIT, VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT, 0,
+            0, NULL,
+            0, NULL,
+            1, &barrier);
+        
+        if (mipWidth > 1) mipWidth /= 2;
+        if (mipHeight > 1) mipHeight /= 2;
+    }
+
+    barrier.subresourceRange.baseMipLevel = mipLevels - 1;
+    barrier.oldLayout = VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL;
+    barrier.newLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+    barrier.srcAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
+    barrier.dstAccessMask = VK_ACCESS_SHADER_READ_BIT;
+
+    vkCmdPipelineBarrier(commandBuffer,
+        VK_PIPELINE_STAGE_TRANSFER_BIT, VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT, 0,
+        0, NULL,
+        0, NULL,
+        1, &barrier);
+
+    lreEndSingleTimeCommands(device,graphicsQueue,commandPool,commandBuffer);
 }
 
 static inline VkFormat lreFindSupportedDepthFormats(VkPhysicalDevice physicalDevice,const VkFormat* candidates,uint32_t candidateSize, VkImageTiling tiling, VkFormatFeatureFlags features) {
@@ -386,7 +484,7 @@ static inline VkFormat lreFindSupportedDepthFormats(VkPhysicalDevice physicalDev
         }
     }
 
-    LOGTOFILE(LOG_LEVEL_ERROR,"Failed to find supported stencil format");
+    LOGTOFILE(LOG_LEVEL_ERROR,"Failed to find supported depth format");
     return VK_FORMAT_UNDEFINED;
 }
 
@@ -413,7 +511,7 @@ LreTextureObject lreCreateDepthResources(VkDevice device,VkPhysicalDevice physic
     imageInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
     
     LreTextureObject textureObject = lreCreateTexture(device,physicalDevice,imageInfo);
-    textureObject.view = lreCreateImageView(device,textureObject.image,depthFormat,VK_IMAGE_VIEW_TYPE_2D,VK_IMAGE_ASPECT_DEPTH_BIT);
+    textureObject.view = lreCreateImageView(device,textureObject.image,depthFormat,VK_IMAGE_VIEW_TYPE_2D,VK_IMAGE_ASPECT_DEPTH_BIT,1);
     //maybe transition the image here
     return textureObject;
 }

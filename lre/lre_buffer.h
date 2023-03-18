@@ -42,15 +42,15 @@ static inline void lreDestroyBuffer(VkDevice device,LreBufferObject buffer) {
 }
 
 LreTextureObject lreCreateTexture(VkDevice device,VkPhysicalDevice physicalDevice,VkImageCreateInfo imageInfo);
-void lreTransitionImageLayout(VkDevice device,VkCommandPool commandPool,VkQueue graphicsQueue,VkImage image,VkFormat format,VkImageLayout oldLayout,VkImageLayout newLayout);
-void lreCopyBufferToImage2D(VkDevice device,VkCommandPool commandPool,VkQueue graphicsQueue,VkBuffer buffer,VkImage image,uint32_t width,uint32_t height);
+void lreTransitionImageLayout(VkDevice device,VkCommandPool commandPool,VkQueue graphicsQueue,VkImage image,VkFormat format,VkImageLayout oldLayout,VkImageLayout newLayout,uint32_t mipLevels);
 void lreCopyBufferToImage(VkDevice device,VkCommandPool commandPool,VkQueue graphicsQueue,VkBuffer buffer,VkImage image,VkExtent3D imageSize,VkImageAspectFlags aspectFlags);
 LreTextureImageObject lreCreateTextureImage2D(VkDevice device,VkPhysicalDevice physicalDevice,VkCommandPool commandPool,VkQueue graphicsQueue,const char* filepath);
 
-
-VkImageView lreCreateImageView(VkDevice device, VkImage image, VkFormat format, VkImageViewType viewType,VkImageAspectFlags aspectFlags);
-VkImageView lreCreateImageView2D(VkDevice device,VkImage image,VkFormat format);
+VkImageView lreCreateImageView(VkDevice device, VkImage image, VkFormat format, VkImageViewType viewType,VkImageAspectFlags aspectFlags,uint32_t mipLevels);
+VkImageView lreCreateImageView2D(VkDevice device,VkImage image,VkFormat format,uint32_t mipLevels);
 VkSampler lreCreateSampler2D(VkDevice device,VkPhysicalDevice physicalDevice,VkFilter mFilter,VkSamplerAddressMode samplerAddressMode);
+
+void lreGenerateMipmaps(VkDevice device,VkPhysicalDevice physicalDevice,VkCommandPool commandPool,VkQueue graphicsQueue,VkImage image, VkFormat imageFormat, int32_t texWidth, int32_t texHeight, uint32_t mipLevels);
 
 static inline void lreDestroyTextureImage(VkDevice device, LreTextureImageObject texture) {
     vkDestroySampler(device,texture.sampler,NULL);

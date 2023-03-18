@@ -203,7 +203,7 @@ LreSwapChainImages lreCreateSwapchainImageViews(VkDevice device,LreSwapChain* sw
 
     for (int i = 0; i < images.count; i++) {
 
-        images.imageViews[i] = lreCreateImageView2D(device,images.images[i],swapChain->surfaceFormat.format);
+        images.imageViews[i] = lreCreateImageView2D(device,images.images[i],swapChain->surfaceFormat.format,1);
 
         // VkImageViewCreateInfo createInfo; memset(&createInfo,0,sizeof(createInfo));
         // createInfo.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
