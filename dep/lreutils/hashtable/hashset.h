@@ -159,7 +159,7 @@ static inline void HASHSET_SET(HASHSET_NAME* table, HASHSET_USIZE index, HASHSET
 
 
 HASHSET_STATIC_IMPL HASHSET_NAME* HASHSET_INSERT(HASHSET_NAME* table,HASHSET_KEYTYPE key) { 
-    if (HASHSET_COMPARE(key, HASHSET_DEFAULT_TYPE_VALUE)) {fprintf(stderr,"[HASHSET insert] Reserved key, value not enteredn"); return table;} 
+    if (HASHSET_COMPARE(key, HASHSET_DEFAULT_TYPE_VALUE)) {fprintf(stderr,"[HASHSET insert] Reserved key, value not entered\n"); return table;} 
     if (table->mem_size < HASHSET_INTERNAL_PRIMES_MAX && (table->item_count > ((float)HASHSET_INTERNAL_PRIMES[table->mem_size])*0.6)) 
         table = HASHSET_RESIZE(table,true); 
     table->item_count++; 

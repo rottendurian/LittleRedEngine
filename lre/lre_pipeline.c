@@ -296,6 +296,7 @@ VkRenderPass lreCreateRenderPass(VkDevice device,VkPhysicalDevice physicalDevice
     subpass.colorAttachmentCount = 1;
     subpass.pColorAttachments = &colorAttachmentRef;
     subpass.pDepthStencilAttachment = &depthAttachmentRef;
+    
 
     VkSubpassDependency dependency; memset(&dependency,0,sizeof(dependency));
     dependency.srcSubpass = VK_SUBPASS_EXTERNAL;
@@ -314,6 +315,7 @@ VkRenderPass lreCreateRenderPass(VkDevice device,VkPhysicalDevice physicalDevice
     renderPassInfo.pSubpasses = &subpass;
     renderPassInfo.dependencyCount = 1;
     renderPassInfo.pDependencies = &dependency;
+    
 
     
 
@@ -327,11 +329,16 @@ VkRenderPass lreCreateRenderPass(VkDevice device,VkPhysicalDevice physicalDevice
 
 }
 
-VkPipelineLayout lreCreateGraphicsPipelineLayout(VkDevice device,VkDescriptorSetLayout* descriptorSetLayout,uint32_t descriptorSetLayoutCount) {
+VkPipelineLayout lreCreateGraphicsPipelineLayout(VkDevice device,VkDescriptorSetLayout* descriptorSetLayout,uint32_t descriptorSetLayoutCount,VkPushConstantRange* pushConstants,uint32_t pushConstantCount) {
     VkPipelineLayoutCreateInfo pipelineLayoutInfo; memset(&pipelineLayoutInfo,0,sizeof(pipelineLayoutInfo));
     pipelineLayoutInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
-    pipelineLayoutInfo.setLayoutCount = 0;
-    pipelineLayoutInfo.pushConstantRangeCount = 0;
+    // pipelineLayoutInfo.setLayoutCount = 0;
+    // pipelineLayoutInfo.pushConstantRangeCount = 0;
+
+    if (pushConstants != NULL) {
+        pipelineLayoutInfo.pPushConstantRanges = pushConstants;
+        pipelineLayoutInfo.pushConstantRangeCount = pushConstantCount;
+    }
 
     if (descriptorSetLayout != NULL) {
         pipelineLayoutInfo.setLayoutCount = descriptorSetLayoutCount;

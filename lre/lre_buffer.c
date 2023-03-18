@@ -215,6 +215,34 @@ void lreCopyBufferToImage2D(VkDevice device,VkCommandPool commandPool,VkQueue gr
     lreEndSingleTimeCommands(device,graphicsQueue,commandPool,commandBuffer);
 }
 
+void lreCopyBufferToImage(VkDevice device,VkCommandPool commandPool,VkQueue graphicsQueue,VkBuffer buffer,VkImage image,VkExtent3D imageSize,VkImageAspectFlags aspectFlags) {
+    VkCommandBuffer commandBuffer = lreBeginSingleTimeCommands(device,commandPool);
+
+    VkBufferImageCopy region; memset(&region,0,sizeof(region));
+    region.bufferOffset = 0;
+    region.bufferRowLength = 0;
+    region.bufferImageHeight = 0;
+
+    region.imageSubresource.aspectMask = aspectFlags;
+    region.imageSubresource.mipLevel = 0;
+    region.imageSubresource.baseArrayLayer = 0;
+    region.imageSubresource.layerCount = 1;
+
+    region.imageOffset = (VkOffset3D){0, 0, 0};
+    region.imageExtent = imageSize;
+
+    vkCmdCopyBufferToImage(
+        commandBuffer,
+        buffer,
+        image,
+        VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
+        1,
+        &region
+    );
+
+    lreEndSingleTimeCommands(device,graphicsQueue,commandPool,commandBuffer);
+}
+
 VkImageView lreCreateImageView(VkDevice device, VkImage image, VkFormat format, VkImageViewType viewType,VkImageAspectFlags aspectFlags) {
     VkImageViewCreateInfo viewInfo; memset(&viewInfo,0,sizeof(viewInfo));
     viewInfo.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;

@@ -158,7 +158,8 @@ LreSwapChain lreCreateSwapChain(LreWindow* window,VkSurfaceKHR surface,VkDevice 
     return lreSwapChain;
 }
 
-#include "lre_object.h"
+#include "lre_buffer.h"
+#include "lre_render.h"
 
 static inline void lreCleanUpSwapChain(LreVulkanObject* vulkanObject) {
     lreDestroyFrameBuffer(vulkanObject->device,vulkanObject->frameBuffer);

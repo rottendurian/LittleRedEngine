@@ -165,7 +165,7 @@ HASHTABLE_STATIC_IMPL HASHTABLE_NAME* HASHTABLE_INSERT(HASHTABLE_NAME* table,HAS
 #ifdef HASHTABLE_LOG_STUFF
     printf("inserting key {%zu}\n",key);
 #endif
-    if (HASHTABLE_COMPARE(key, HASHTABLEDEFAULTTYPEVALUE)) {fprintf(stderr,"[hashtable insert] Reserved key, value not enteredn"); return table;} 
+    if (HASHTABLE_COMPARE(key, HASHTABLEDEFAULTTYPEVALUE)) {fprintf(stderr,"[hashtable insert] Reserved key, value not entered\n"); return table;} 
     if (table->mem_size < HASHTABLE_INTERNAL_PRIMES_MAX && (table->item_count > ((float)HASHTABLE_INTERNAL_PRIMES[table->mem_size])*0.6)) 
         table = HASHTABLE_RESIZE(table,true); 
     table->item_count++; 

@@ -119,6 +119,9 @@ typedef struct LreDrawInfo {
 
     uint32_t clearColorCount;
     VkClearValue* clearColor;
+
+    void* pushConstant;
+    uint32_t pushConstantSize;
 } LreDrawInfo;
 
 typedef struct LreSynchronization {

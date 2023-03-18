@@ -145,7 +145,9 @@ void lreRecordDrawCommandBuffer(LreVulkanObject* vulkanObject,uint32_t imageInde
     vkCmdBindVertexBuffers(vulkanObject->commandBuffer[currentFrame], drawInfo->bufferStartIndex, drawInfo->bufferCount,drawInfo->vertexBuffers,drawInfo->bufferOffsets);
     vkCmdBindIndexBuffer(vulkanObject->commandBuffer[currentFrame],drawInfo->indexBuffer,drawInfo->indexOffset,drawInfo->indexType);
     vkCmdBindDescriptorSets(vulkanObject->commandBuffer[currentFrame], VK_PIPELINE_BIND_POINT_GRAPHICS, vulkanObject->pipelineLayout, drawInfo->descriptorStartSet, drawInfo->descriptorCount, drawInfo->descriptorSets, 0, NULL);
-
+    
+    if (drawInfo->pushConstant != NULL)
+        vkCmdPushConstants(vulkanObject->commandBuffer[currentFrame],vulkanObject->pipelineLayout,VK_SHADER_STAGE_VERTEX_BIT,0,drawInfo->pushConstantSize,drawInfo->pushConstant);
     // VkBuffer vertexBuffers[] = {vertexBuffer};
     // VkDeviceSize offsets[] = {0};
     

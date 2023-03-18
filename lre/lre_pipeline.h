@@ -42,7 +42,7 @@ static inline void lreDestroyDescriptorPool(VkDevice device,LreDescriptorPool po
 VkRenderPass lreCreateRenderPass(VkDevice device,VkPhysicalDevice physicalDevice,VkFormat swapChainImageFormat);
 static inline void lreDestroyRenderPass(VkDevice device,VkRenderPass renderPass) {vkDestroyRenderPass(device, renderPass, NULL);}
 
-VkPipelineLayout lreCreateGraphicsPipelineLayout(VkDevice device,VkDescriptorSetLayout* descriptorSetLayout,uint32_t descriptorSetLayoutCount);
+VkPipelineLayout lreCreateGraphicsPipelineLayout(VkDevice device,VkDescriptorSetLayout* descriptorSetLayout,uint32_t descriptorSetLayoutCount,VkPushConstantRange* pushConstants,uint32_t pushConstantCount);
 static inline void lreDestroyGraphicsPipelineLayout(VkDevice device,VkPipelineLayout pipelineLayout) {vkDestroyPipelineLayout(device,pipelineLayout,NULL);}
 
 VkPipeline lreCreateGraphicsPipeline(VkDevice device,VkRenderPass renderPass,VkPipelineLayout pipelineLayout,LreVertexInputDescriptions* vertexInputDescriptions,const char* vertexFile,const char* fragFile);
