@@ -1,6 +1,19 @@
 #ifndef lre_types_h
 #define lre_types_h
 
+typedef struct LreWindowMouseOffsets {
+    float lastX;
+    float lastY;
+    float offsetX;
+    float offsetY;
+    bool firstMouse;
+} LreWindowMouseOffsets;
+
+typedef struct LreWindowScrollOffsets {
+    float offsetX;
+    float offsetY;
+} LreWindowScrollOffsets;
+
 //window
 typedef struct LreWindow {
     GLFWwindow* window;
@@ -8,6 +21,8 @@ typedef struct LreWindow {
     int height;
     const char* name;
     int frameBufferResized;
+    LreWindowMouseOffsets mouseOffsets;
+    LreWindowScrollOffsets scrollOffsets;
 } LreWindow; 
 
 //device
@@ -67,6 +82,29 @@ typedef struct LreVertexInputDescriptions {
     VkVertexInputAttributeDescription* attributeDescriptions;
     uint32_t attributeDescriptionCount;
 } LreVertexInputDescriptions;
+
+//pipeline creation info
+typedef struct LrePushConstantInfo {
+    VkShaderStageFlags stageFlags;
+    uint32_t size;
+    void* data;
+} LrePushConstantInfo;
+
+typedef struct LreDescriptorSetItem {
+    uint32_t binding;
+    uint32_t descriptorCount;
+    VkDescriptorType type;
+    VkShaderStageFlags stageFlags;
+    union {
+        LreTextureImageObject* textureImage;
+        LreUniformBufferObject* uniformBuffer;
+    };
+} LreDescriptorSetItem;
+
+typedef struct LreDescriptorSetInfo {
+    LreDescriptorSetItem* items;
+    uint32_t itemCount;
+} LreDescriptorSetInfo;
 
 //buffer
 typedef struct LreBufferObject {
@@ -129,6 +167,53 @@ typedef struct LreSynchronization {
     VkSemaphore* renderFinishedSemaphores;
     VkFence* inFlightFences;
 } LreSynchronization;
+
+
+//objects
+typedef struct LreInstanceObject {
+    LreWindow window;
+    VkInstance instance;
+    VkDebugUtilsMessengerEXT debugger;
+    VkSurfaceKHR surface;
+    VkPhysicalDevice physicalDevice;
+    VkDevice device;
+} LreInstanceObject;
+
+typedef struct LreRenderObject {
+    VkQueue graphicsQueue;
+    VkQueue presentQueue;
+    VkCommandPool commandPool;
+    VkCommandBuffer* commandBuffers;
+    LreSynchronization syncObjects;
+} LreRenderObject;
+
+typedef struct LreSwapChainObject {
+    LreSwapChain swapChain;
+    LreSwapChainImages swapChainImages;
+    LreTextureObject depthImage;
+} LreSwapChainObject;
+
+typedef struct LrePipelineObject {
+    VkRenderPass renderPass;
+    VkPipelineLayout pipelineLayout;
+    VkPipeline graphicsPipeline;
+    LreFrameBuffer frameBuffers;
+    LreDescriptorPool descriptorPool;
+
+    //additional info - need a pipeline builder & defaults
+    LreDescriptorSetInfo descriptorSets; //descriptorSet info
+    LrePushConstantInfo pushConstant; //pushConstant info
+    LreVertexInputDescriptions vertexInputDescriptions;
+
+
+} LrePipelineObject;
+
+typedef struct LreVulkanObject {
+    LreInstanceObject instance;
+    LreRenderObject render;
+    LreSwapChainObject swapChain;
+    LrePipelineObject pipeline;
+} LreVulkanObject;
 
 //vulkan object
 typedef struct LreVulkanObject {

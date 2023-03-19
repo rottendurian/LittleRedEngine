@@ -140,14 +140,19 @@ HASHTABLE_STATIC_IMPL HASHTABLE_USIZE HASHTABLE_BYTES(HASHTABLE_USIZE index) {
 HASHTABLE_STATIC_IMPL HASHTABLE_NAME* HASHTABLE_NEW() { 
     HASHTABLE_USIZE byte_size = HASHTABLE_BYTES(0); 
     HASHTABLE_NAME* table = (HASHTABLE_NAME*)malloc(byte_size); 
-    memset(table,HASHTABLEDEFAULTFILLVALUE,byte_size); 
+    memset(((char*)table)+sizeof(HASHTABLE_NAME),HASHTABLEDEFAULTFILLVALUE,byte_size-sizeof(HASHTABLE_NAME)); 
+    table->item_count = 0;
+    table->max_col = 0;
+    table->mem_size = 0;
     return table; 
 } 
 HASHTABLE_STATIC_IMPL HASHTABLE_NAME* HASHTABLE_NEW_WITH_SIZE(HASHTABLE_USIZE size) { 
     HASHTABLE_USIZE byte_size = HASHTABLE_BYTES(size); 
     HASHTABLE_NAME* table = (HASHTABLE_NAME*)malloc(byte_size); 
+    memset(((char*)table)+sizeof(HASHTABLE_NAME),HASHTABLEDEFAULTFILLVALUE,byte_size-sizeof(HASHTABLE_NAME)); 
+    table->item_count = 0;
+    table->max_col = 0;
     table->mem_size = size;
-    memset(((char*)table)+sizeof(HASHTABLE_USIZE),HASHTABLEDEFAULTFILLVALUE,byte_size-sizeof(HASHTABLE_USIZE)); 
     return table; 
 } 
 static inline HASHTABLE_METADATA* HASHTABLE_GET(HASHTABLE_NAME* table,HASHTABLE_USIZE index) { 

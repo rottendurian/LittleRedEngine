@@ -16,7 +16,7 @@ static const int VERTEX_ATTRIB_COUNT = 3;
 
 typedef struct Vertex {
     vec3 pos;
-    vec3 color;
+    vec3 normal;
     vec2 texCoord;
 } Vertex;
 
@@ -42,7 +42,7 @@ static VkVertexInputAttributeDescription* VertexGetAttributeDescriptions() {
     attributeDescriptions[1].binding = 0;
     attributeDescriptions[1].location = 1;
     attributeDescriptions[1].format = VK_FORMAT_R32G32B32_SFLOAT;
-    attributeDescriptions[1].offset = offsetof(Vertex, color);
+    attributeDescriptions[1].offset = offsetof(Vertex, normal);
 
     attributeDescriptions[2].binding = 0;
     attributeDescriptions[2].location = 2;
@@ -61,10 +61,10 @@ static inline size_t VertexHash(Vertex vertex) {
     hash = (hash ^ *(const uint32_t*)&vertex.pos[1]) * prime;
     hash = (hash ^ *(const uint32_t*)&vertex.pos[2]) * prime;
 
-    // Hash the color field
-    hash = (hash ^ *(const uint32_t*)&vertex.color[0]) * prime;
-    hash = (hash ^ *(const uint32_t*)&vertex.color[1]) * prime;
-    hash = (hash ^ *(const uint32_t*)&vertex.color[2]) * prime;
+    // Hash the normal field
+    hash = (hash ^ *(const uint32_t*)&vertex.normal[0]) * prime;
+    hash = (hash ^ *(const uint32_t*)&vertex.normal[1]) * prime;
+    hash = (hash ^ *(const uint32_t*)&vertex.normal[2]) * prime;
 
     // Hash the texCoord field
     hash = (hash ^ *(const uint32_t*)&vertex.texCoord[0]) * prime;
@@ -74,15 +74,15 @@ static inline size_t VertexHash(Vertex vertex) {
 }
 
 static inline bool VertexCmp(Vertex v1,Vertex v2) {
-    // return v1.pos == v2.pos && v1.color == v2.color && v1.texCoord == v2.texCoord;
+    // return v1.pos == v2.pos && v1.normal == v2.normal && v1.texCoord == v2.texCoord;
     int posComparison = memcmp(&v1.pos, &v2.pos, sizeof(vec3));
     if (posComparison != 0) {
         return !posComparison;
     }
 
-    int colorComparison = memcmp(&v1.color, &v2.color, sizeof(vec3));
-    if (colorComparison != 0) {
-        return !colorComparison;
+    int normalComparison = memcmp(&v1.normal, &v2.normal, sizeof(vec3));
+    if (normalComparison != 0) {
+        return !normalComparison;
     }
 
     return !memcmp(&v1.texCoord, &v2.texCoord, sizeof(vec2));

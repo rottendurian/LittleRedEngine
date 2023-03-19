@@ -16,7 +16,7 @@ static inline LreObjModelData lreLoadObjectModel(const char* filename) {
 #endif
     array_Vertex* mvertices = array_Vertex_new(100);
     array_uint32_t* mindices = array_uint32_t_new(100);
-    hashtable_Vertex* hashtableVertices = hashtable_Vertex_new();
+    hashtable_Vertex* hashtableVertices = hashtable_Vertex_new(13);
 
     for (uint32_t i = 0; i < mesh->group_count; i++) {
         const fastObjGroup group = mesh->groups[i];
@@ -35,9 +35,9 @@ static inline LreObjModelData lreLoadObjectModel(const char* filename) {
                 vertex.pos[1] = mesh->positions[3 * mi.p + 1];
                 vertex.pos[2] = mesh->positions[3 * mi.p + 2];
 
-                vertex.color[0] = 1.0f;
-                vertex.color[1] = 1.0f;
-                vertex.color[2] = 1.0f;
+                vertex.normal[0] = mesh->normals[3 * mi.p + 0];
+                vertex.normal[1] = mesh->normals[3 * mi.p + 1];
+                vertex.normal[2] = mesh->normals[3 * mi.p + 2];
 
                 vertex.texCoord[0] = mesh->texcoords[2 * mi.t + 0];
                 vertex.texCoord[1] = 1.0f - mesh->texcoords[2 * mi.t + 1];

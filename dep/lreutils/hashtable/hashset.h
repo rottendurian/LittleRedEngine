@@ -138,14 +138,19 @@ HASHSET_STATIC_IMPL HASHSET_USIZE HASHSET_BYTES(HASHSET_USIZE index) {
 HASHSET_STATIC_IMPL HASHSET_NAME* HASHSET_NEW() { 
     HASHSET_USIZE byte_size = HASHSET_BYTES(0); 
     HASHSET_NAME* table = (HASHSET_NAME*)malloc(byte_size); 
-    memset(table,HASHSET_DEFAULT_FILL_VALUE,byte_size); 
+    memset(((char*)table)+sizeof(HASHSET_NAME),HASHSET_DEFAULT_FILL_VALUE,byte_size-sizeof(HASHSET_NAME)); 
+    table->item_count = 0;
+    table->max_col = 0;
+    table->mem_size = 0;
     return table; 
 } 
 HASHSET_STATIC_IMPL HASHSET_NAME* HASHSET_NEW_WITH_SIZE(HASHSET_USIZE size) { 
     HASHSET_USIZE byte_size = HASHSET_BYTES(size); 
     HASHSET_NAME* table = (HASHSET_NAME*)malloc(byte_size); 
     table->mem_size = size;
-    memset(((char*)table)+sizeof(HASHSET_USIZE),HASHSET_DEFAULT_FILL_VALUE,byte_size-sizeof(HASHSET_USIZE)); 
+    table->item_count = 0;
+    table->max_col = 0;
+    memset(((char*)table)+sizeof(HASHSET_NAME),HASHSET_DEFAULT_FILL_VALUE,byte_size-sizeof(HASHSET_NAME)); 
     return table; 
 } 
 static inline HASHSET_METADATA* HASHSET_GET(HASHSET_NAME* table,HASHSET_USIZE index) { 
@@ -161,11 +166,11 @@ static inline void HASHSET_SET(HASHSET_NAME* table, HASHSET_USIZE index, HASHSET
 HASHSET_STATIC_IMPL HASHSET_NAME* HASHSET_INSERT(HASHSET_NAME* table,HASHSET_KEYTYPE key) { 
     if (HASHSET_COMPARE(key, HASHSET_DEFAULT_TYPE_VALUE)) {fprintf(stderr,"[HASHSET insert] Reserved key, value not entered\n"); return table;} 
     if (table->mem_size < HASHSET_INTERNAL_PRIMES_MAX && (table->item_count > ((float)HASHSET_INTERNAL_PRIMES[table->mem_size])*0.6)) 
-        table = HASHSET_RESIZE(table,true); 
+        table = HASHSET_RESIZE(table,true);
     table->item_count++; 
-    HASHSET_USIZE index = HASHSET_HASHFUNC(key); 
-    HASHSET_METADATA* meta; 
-    if (HASHSET_COMPARE((meta = HASHSET_GET(table,index))->key, HASHSET_DEFAULT_TYPE_VALUE)) { 
+    HASHSET_USIZE index = HASHSET_HASHFUNC(key);
+    HASHSET_METADATA* meta = HASHSET_GET(table,index); 
+    if (HASHSET_COMPARE(meta->key, HASHSET_DEFAULT_TYPE_VALUE)) { 
         HASHSET_SET(table,index,key); 
         return table; 
     } 

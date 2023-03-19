@@ -14,6 +14,7 @@ static inline QueueFamilyIndices findQueueFamilies(VkPhysicalDevice device,VkSur
     uint32_t queueFamilyCount = 0;
     vkGetPhysicalDeviceQueueFamilyProperties(device, &queueFamilyCount, NULL);
 
+    // printf("Queue family count %lu\n",queueFamilyCount);
     VkQueueFamilyProperties* queueFamilies = (VkQueueFamilyProperties*)malloc(queueFamilyCount*sizeof(VkQueueFamilyProperties));
     vkGetPhysicalDeviceQueueFamilyProperties(device, &queueFamilyCount, queueFamilies);
 
@@ -102,22 +103,18 @@ VkPhysicalDevice lrePickPhysicalDevice(VkInstance instance,VkSurfaceKHR surface)
     return physicalDevice;
 }
 
-// static inline bool hashset_uint32_compare_func(uint32_t x,uint32_t y) {
-//     return x == y;
-// }
-// #include "hashtable/hashfunctions.h"
-// #define HASHSET_STATIC
-// #define HASHSET_NAME hashset_uint32_t
-// #define HASHSET_KETTYPE uint32_t
-// #define HAHSET_USIZE uint32_t
-// #define HASHSET_HASHFUNC jenkins_uint32
-// #define HASHSET_COMPARE hashset_uint32_compare_func
-// #include "hashtable/hashset.h"
-
-// #include "lre_helper.h"
+static inline bool hashset_uint32_compare_func(uint32_t x,uint32_t y) {
+    return x == y;
+}
 #include "hashtable/hashfunctions.h"
-#include "hashtable/hashsetold.h"
-hashset(uint32_t,jenkins_uint32,default_compare,SETNOTHEAP);
+#define HASHSET_STATIC
+#define HASHSET_NAME hashset_uint32_t
+#define HASHSET_KETTYPE uint32_t
+#define HAHSET_USIZE uint32_t
+#define HASHSET_HASHFUNC jenkins_uint32
+#define HASHSET_COMPARE hashset_uint32_compare_func
+#include "hashtable/hashset.h"
+#define HASHSETDEFAULTVALUE -1
 
 
 static inline LreQueueFamilyVec lreCreatePresentQueue(VkPhysicalDevice physicalDevice,VkSurfaceKHR surface,QueueFamilyIndices *indices) { //friendly reminder to free this thing
@@ -127,11 +124,13 @@ static inline LreQueueFamilyVec lreCreatePresentQueue(VkPhysicalDevice physicalD
     
     VkDeviceQueueCreateInfo* queueCreateInfos = (VkDeviceQueueCreateInfo*)malloc(queueSize*sizeof(VkDeviceQueueCreateInfo));
     
-    hashset_uint32_t* uniqueQueueFamilies = hashset_uint32_t_create();
+    hashset_uint32_t* uniqueQueueFamilies = hashset_uint32_t_new();
     // lreSet uniqueQueueFamilies = lreCreateSet(2);
 
     uniqueQueueFamilies = hashset_uint32_t_insert(uniqueQueueFamilies,indices->graphicsFamily.value);
     uniqueQueueFamilies = hashset_uint32_t_insert(uniqueQueueFamilies,indices->presentFamily.value);
+
+    // printf("graphics %lu , present %lu\n",indices->graphicsFamily.value,indices->presentFamily.value);
 
     // lreInsertSet(&uniqueQueueFamilies,indices->graphicsFamily.value);
     // lreInsertSet(&uniqueQueueFamilies,indices->presentFamily.value);
@@ -139,12 +138,17 @@ static inline LreQueueFamilyVec lreCreatePresentQueue(VkPhysicalDevice physicalD
     
 
     float queuePriority = 1.0f;
-    for (int i = 0; i < set_internal_primes[uniqueQueueFamilies->mem_size]; i++) {
+    for (uint32_t i = 0; i < HASHSET_INTERNAL_PRIMES_uint32_t[uniqueQueueFamilies->mem_size]; i++) {
         
-        uint32_t value =  hashset_uint32_t_get(uniqueQueueFamilies,i);
+        
+        // uint32_t value =  hashset_uint32_t_get(uniqueQueueFamilies,i);
         // uint32_t value = lreGetSet(&uniqueQueueFamilies,i);
-        
-        if (value != HASHTABLEDEFAULTVALUE) {
+        // bool found = hashset_uint32_t_found(uniqueQueueFamilies,i);
+        hashset_uint32_t_metadata* metadata = _hashset_uint32_t_get(uniqueQueueFamilies,i);
+        uint32_t value = metadata->key;
+        // printf("Value %lu\n",value);
+
+        if (value != HASHSETDEFAULTVALUE) {
             // printf("Value worked %u\n",value);
             VkDeviceQueueCreateInfo queueCreateInfo; memset(&queueCreateInfo,0,sizeof(queueCreateInfo));
             queueCreateInfo.sType = VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO;
@@ -226,7 +230,7 @@ VkQueue lreGetGraphicsQueue(VkPhysicalDevice physicalDevice,VkDevice device,VkSu
     VkQueue graphicsQueue;
     QueueFamilyIndices indices = findQueueFamilies(physicalDevice,surface);
     vkGetDeviceQueue(device,indices.graphicsFamily.value,0,&graphicsQueue);
-    
+    // printf("graphicsQueue: %lu\n",indices.graphicsFamily.value);
     return graphicsQueue;
 }
 
@@ -234,7 +238,7 @@ VkQueue lreGetPresentQueue(VkPhysicalDevice physicalDevice,VkDevice device,VkSur
     VkQueue presentQueue;
     QueueFamilyIndices indices = findQueueFamilies(physicalDevice,surface);
     vkGetDeviceQueue(device,indices.presentFamily.value,0,&presentQueue);
-    
+    // printf("presentQueue: %lu\n",indices.presentFamily.value);
     return presentQueue;
 }
 
