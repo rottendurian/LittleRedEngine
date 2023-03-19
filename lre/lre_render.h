@@ -8,7 +8,7 @@
 // #include "lre_buffer.h"
 // #include "lre_object.h"
 
-LreFrameBuffer lreCreateFrameBuffer(VkDevice device,LreSwapChain lreSwapChain,LreSwapChainImages* lreSwapChainImages,VkRenderPass renderPass,LreTextureObject depthImage);
+LreFrameBuffer lreCreateFrameBuffer(VkDevice device,LreSwapChain lreSwapChain,LreSwapChainImages* lreSwapChainImages,VkRenderPass renderPass,LreTextureObject depthImage,LreTextureObject colorImage);
 static inline void lreDestroyFrameBuffer(VkDevice device,LreFrameBuffer frameBuffers) {
     for (size_t i = 0; i < frameBuffers.count; i++) {
         vkDestroyFramebuffer(device,frameBuffers.frame[i],NULL);

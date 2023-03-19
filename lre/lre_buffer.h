@@ -41,7 +41,7 @@ static inline void lreDestroyBuffer(VkDevice device,LreBufferObject buffer) {
     vkFreeMemory(device,buffer.memory,NULL);
 }
 
-LreTextureObject lreCreateTexture(VkDevice device,VkPhysicalDevice physicalDevice,VkImageCreateInfo imageInfo);
+LreTextureObject lreCreateTexture(VkDevice device,VkPhysicalDevice physicalDevice,VkImageCreateInfo imageInfo,VkMemoryPropertyFlags memoryProperties);
 void lreTransitionImageLayout(VkDevice device,VkCommandPool commandPool,VkQueue graphicsQueue,VkImage image,VkFormat format,VkImageLayout oldLayout,VkImageLayout newLayout,uint32_t mipLevels);
 void lreCopyBufferToImage(VkDevice device,VkCommandPool commandPool,VkQueue graphicsQueue,VkBuffer buffer,VkImage image,VkExtent3D imageSize,VkImageAspectFlags aspectFlags);
 LreTextureImageObject lreCreateTextureImage2D(VkDevice device,VkPhysicalDevice physicalDevice,VkCommandPool commandPool,VkQueue graphicsQueue,const char* filepath);
@@ -65,6 +65,7 @@ static inline void lreDestroyTexture(VkDevice device, LreTextureObject texture) 
     vkFreeMemory(device,texture.memory,NULL);
 }
 
+LreTextureObject lreCreateColorResources(VkDevice device,VkPhysicalDevice physicalDevice,LreSwapChain swapChain);
 LreTextureObject lreCreateDepthResources(VkDevice device,VkPhysicalDevice physicalDevice,LreSwapChain swapChain);
 
 VkFormat lreFindSupportedDepthFormat(VkPhysicalDevice physicalDevice);

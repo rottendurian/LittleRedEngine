@@ -38,6 +38,7 @@ typedef struct UniformBufferObject {
     float time;
 } UniformBufferObject;
 
+//16 byte alignment
 typedef struct PushConstant {
     mat4 camera;
     mat4 model;
@@ -156,6 +157,7 @@ int main() {
 //swapchain
     vulkanObject.lreSwapChain = lreCreateSwapChain(&vulkanObject.window,vulkanObject.surface,vulkanObject.device,vulkanObject.physicalDevice);
     vulkanObject.lreSwapChainImages = lreCreateSwapchainImageViews(vulkanObject.device,&vulkanObject.lreSwapChain);
+    vulkanObject.colorImage = lreCreateColorResources(vulkanObject.device,vulkanObject.physicalDevice,vulkanObject.lreSwapChain);
     vulkanObject.depthImage = lreCreateDepthResources(vulkanObject.device,vulkanObject.physicalDevice,vulkanObject.lreSwapChain);
 
 
@@ -211,8 +213,8 @@ int main() {
     pushConstantRange.size = sizeof(PushConstant);
 
     vulkanObject.pipelineLayout = lreCreateGraphicsPipelineLayout(vulkanObject.device,&descriptorSetLayout,1,&pushConstantRange,1);
-    vulkanObject.graphicsPipeline = lreCreateGraphicsPipeline(vulkanObject.device,vulkanObject.renderPass,vulkanObject.pipelineLayout,&vertexInputDescriptions,"res/shaders/simple_shader.vert.spv","res/shaders/simple_shader.frag.spv");
-    vulkanObject.frameBuffer = lreCreateFrameBuffer(vulkanObject.device,vulkanObject.lreSwapChain,&vulkanObject.lreSwapChainImages,vulkanObject.renderPass,vulkanObject.depthImage);
+    vulkanObject.graphicsPipeline = lreCreateGraphicsPipeline(vulkanObject.device,vulkanObject.physicalDevice,vulkanObject.renderPass,vulkanObject.pipelineLayout,&vertexInputDescriptions,"res/shaders/simple_shader.vert.spv","res/shaders/simple_shader.frag.spv");
+    vulkanObject.frameBuffer = lreCreateFrameBuffer(vulkanObject.device,vulkanObject.lreSwapChain,&vulkanObject.lreSwapChainImages,vulkanObject.renderPass,vulkanObject.depthImage,vulkanObject.colorImage);
 
     lreDestroyVertexInputDescriptions(&vertexInputDescriptions);
 
@@ -304,6 +306,7 @@ int main() {
     
     lreDestroyCommandPool(vulkanObject.device,vulkanObject.commandPool);
     lreDestroyTexture(vulkanObject.device,vulkanObject.depthImage);
+    lreDestroyTexture(vulkanObject.device,vulkanObject.colorImage);
 
     lreDestroyFrameBuffer(vulkanObject.device,vulkanObject.frameBuffer);
     

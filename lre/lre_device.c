@@ -3,7 +3,8 @@
 
 #include "lre_device.h"
 
-static QueueFamilyIndices indicesStatic = {0}; 
+static QueueFamilyIndices indicesStatic = {0}; //temporary solutions
+static VkSampleCountFlagBits maxMsaa = 0;
 
 static inline QueueFamilyIndices findQueueFamilies(VkPhysicalDevice device,VkSurfaceKHR surface) {
     if (indicesStatic.exists != 0) {
@@ -242,6 +243,23 @@ VkQueue lreGetPresentQueue(VkPhysicalDevice physicalDevice,VkDevice device,VkSur
     return presentQueue;
 }
 
+VkSampleCountFlagBits lreGetMaxUsableSampleCount(VkPhysicalDevice physicalDevice) {
+    if (maxMsaa != 0) {
+        return maxMsaa;
+    }
+    VkPhysicalDeviceProperties physicalDeviceProperties;
+    vkGetPhysicalDeviceProperties(physicalDevice, &physicalDeviceProperties);
 
+    VkSampleCountFlags counts = physicalDeviceProperties.limits.framebufferColorSampleCounts & physicalDeviceProperties.limits.framebufferDepthSampleCounts;
+    if (counts & VK_SAMPLE_COUNT_64_BIT) { maxMsaa = VK_SAMPLE_COUNT_64_BIT; return VK_SAMPLE_COUNT_64_BIT; }
+    if (counts & VK_SAMPLE_COUNT_32_BIT) { maxMsaa = VK_SAMPLE_COUNT_32_BIT; return VK_SAMPLE_COUNT_32_BIT; }
+    if (counts & VK_SAMPLE_COUNT_16_BIT) { maxMsaa = VK_SAMPLE_COUNT_16_BIT; return VK_SAMPLE_COUNT_16_BIT; }
+    if (counts & VK_SAMPLE_COUNT_8_BIT) {  maxMsaa = VK_SAMPLE_COUNT_8_BIT; return VK_SAMPLE_COUNT_8_BIT; }
+    if (counts & VK_SAMPLE_COUNT_4_BIT) {  maxMsaa = VK_SAMPLE_COUNT_4_BIT; return VK_SAMPLE_COUNT_4_BIT; }
+    if (counts & VK_SAMPLE_COUNT_2_BIT) {  maxMsaa = VK_SAMPLE_COUNT_2_BIT; return VK_SAMPLE_COUNT_2_BIT; }
+
+    maxMsaa = VK_SAMPLE_COUNT_1_BIT;
+    return VK_SAMPLE_COUNT_1_BIT;
+}
 
 #endif

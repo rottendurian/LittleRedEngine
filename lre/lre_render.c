@@ -3,12 +3,13 @@
 
 #include "lre_render.h"
 
-LreFrameBuffer lreCreateFrameBuffer(VkDevice device,LreSwapChain lreSwapChain,LreSwapChainImages* lreSwapChainImages,VkRenderPass renderPass,LreTextureObject depthImage) {
+LreFrameBuffer lreCreateFrameBuffer(VkDevice device,LreSwapChain lreSwapChain,LreSwapChainImages* lreSwapChainImages,VkRenderPass renderPass,LreTextureObject depthImage,LreTextureObject colorImage) {
     VkFramebuffer *swapChainFrameBuffers = (VkFramebuffer*)malloc(lreSwapChainImages->count*sizeof(VkFramebuffer));
     for (uint32_t i = 0; i < lreSwapChainImages->count; i++) {
         VkImageView attachments[] = {
+            colorImage.view,
+            depthImage.view,
             lreSwapChainImages->imageViews[i],
-            depthImage.view
         };
 
         VkFramebufferCreateInfo framebufferInfo; memset(&framebufferInfo,0,sizeof(framebufferInfo));

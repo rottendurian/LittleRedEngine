@@ -21,4 +21,6 @@ QueueFamilyIndices lreFindQueueFamilies(VkPhysicalDevice physicalDevice,VkSurfac
 VkQueue lreGetGraphicsQueue(VkPhysicalDevice physicalDevice,VkDevice device,VkSurfaceKHR surface);
 VkQueue lreGetPresentQueue(VkPhysicalDevice physicalDevice,VkDevice device,VkSurfaceKHR surface);
 
+VkSampleCountFlagBits lreGetMaxUsableSampleCount(VkPhysicalDevice physicalDevice);
+
 #endif

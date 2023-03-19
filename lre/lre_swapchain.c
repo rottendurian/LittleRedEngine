@@ -169,6 +169,7 @@ static inline void lreCleanUpSwapChain(LreVulkanObject* vulkanObject) {
     lreDestroySwapchainImageViews(vulkanObject->device,&vulkanObject->lreSwapChainImages);
     lreDestroySwapChain(vulkanObject->device,&vulkanObject->lreSwapChain);
     lreDestroyTexture(vulkanObject->device,vulkanObject->depthImage);
+    lreDestroyTexture(vulkanObject->device,vulkanObject->colorImage);
 }
 
 void lreReCreateSwapChain(LreVulkanObject *vulkanObject) {
@@ -184,8 +185,9 @@ void lreReCreateSwapChain(LreVulkanObject *vulkanObject) {
 
     vulkanObject->lreSwapChain = lreCreateSwapChain(&vulkanObject->window,vulkanObject->surface,vulkanObject->device,vulkanObject->physicalDevice);
     vulkanObject->lreSwapChainImages = lreCreateSwapchainImageViews(vulkanObject->device,&vulkanObject->lreSwapChain);
+    vulkanObject->colorImage = lreCreateColorResources(vulkanObject->device,vulkanObject->physicalDevice,vulkanObject->lreSwapChain);
     vulkanObject->depthImage = lreCreateDepthResources(vulkanObject->device,vulkanObject->physicalDevice,vulkanObject->lreSwapChain);
-    vulkanObject->frameBuffer = lreCreateFrameBuffer(vulkanObject->device,vulkanObject->lreSwapChain,&vulkanObject->lreSwapChainImages,vulkanObject->renderPass,vulkanObject->depthImage);
+    vulkanObject->frameBuffer = lreCreateFrameBuffer(vulkanObject->device,vulkanObject->lreSwapChain,&vulkanObject->lreSwapChainImages,vulkanObject->renderPass,vulkanObject->depthImage,vulkanObject->colorImage);
 }
 
 static inline LreSwapChainImages lreGetSwapChainImages(VkDevice device,VkSwapchainKHR swapChain) {

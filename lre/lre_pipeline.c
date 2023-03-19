@@ -261,7 +261,7 @@ LreDescriptorPool lreCreateDescriptorPool(VkDevice device,VkDescriptorSetLayout 
 VkRenderPass lreCreateRenderPass(VkDevice device,VkPhysicalDevice physicalDevice,VkFormat swapChainImageFormat) {
     VkAttachmentDescription colorAttachment; memset(&colorAttachment,0,sizeof(colorAttachment));
     colorAttachment.format = swapChainImageFormat;
-    colorAttachment.samples = VK_SAMPLE_COUNT_1_BIT;
+    colorAttachment.samples = lreGetMaxUsableSampleCount(physicalDevice);
 
     colorAttachment.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
     colorAttachment.storeOp = VK_ATTACHMENT_STORE_OP_STORE;
@@ -270,7 +270,7 @@ VkRenderPass lreCreateRenderPass(VkDevice device,VkPhysicalDevice physicalDevice
     colorAttachment.stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
 
     colorAttachment.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
-    colorAttachment.finalLayout = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
+    colorAttachment.finalLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
 
     VkAttachmentReference colorAttachmentRef; memset(&colorAttachmentRef,0,sizeof(colorAttachmentRef));
     colorAttachmentRef.attachment = 0;
@@ -279,7 +279,7 @@ VkRenderPass lreCreateRenderPass(VkDevice device,VkPhysicalDevice physicalDevice
     //depth buffer
     VkAttachmentDescription depthAttachment; memset(&depthAttachment,0,sizeof(depthAttachment));
     depthAttachment.format = lreFindSupportedDepthFormat(physicalDevice);
-    depthAttachment.samples = VK_SAMPLE_COUNT_1_BIT;
+    depthAttachment.samples = lreGetMaxUsableSampleCount(physicalDevice);
     depthAttachment.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
     depthAttachment.storeOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
     depthAttachment.stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
@@ -291,11 +291,26 @@ VkRenderPass lreCreateRenderPass(VkDevice device,VkPhysicalDevice physicalDevice
     depthAttachmentRef.attachment = 1;
     depthAttachmentRef.layout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
 
+    VkAttachmentDescription colorAttachmentResolve; memset(&colorAttachmentResolve,0,sizeof(colorAttachmentResolve));
+    colorAttachmentResolve.format = swapChainImageFormat;
+    colorAttachmentResolve.samples = VK_SAMPLE_COUNT_1_BIT;
+    colorAttachmentResolve.loadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
+    colorAttachmentResolve.storeOp = VK_ATTACHMENT_STORE_OP_STORE;
+    colorAttachmentResolve.stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
+    colorAttachmentResolve.stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
+    colorAttachmentResolve.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
+    colorAttachmentResolve.finalLayout = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
+
+    VkAttachmentReference colorAttachmentResolveRef; memset(&colorAttachmentResolveRef,0,sizeof(colorAttachmentResolveRef));
+    colorAttachmentResolveRef.attachment = 2;
+    colorAttachmentResolveRef.layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+
     VkSubpassDescription subpass; memset(&subpass,0,sizeof(subpass));
     subpass.pipelineBindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS;
     subpass.colorAttachmentCount = 1;
     subpass.pColorAttachments = &colorAttachmentRef;
     subpass.pDepthStencilAttachment = &depthAttachmentRef;
+    subpass.pResolveAttachments = &colorAttachmentResolveRef;
     
 
     VkSubpassDependency dependency; memset(&dependency,0,sizeof(dependency));
@@ -306,7 +321,7 @@ VkRenderPass lreCreateRenderPass(VkDevice device,VkPhysicalDevice physicalDevice
     dependency.dstStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT | VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT;
     dependency.dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT | VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT;
 
-    VkAttachmentDescription attachments[2] = {colorAttachment,depthAttachment};
+    VkAttachmentDescription attachments[3] = {colorAttachment,depthAttachment,colorAttachmentResolve};
     VkRenderPassCreateInfo renderPassInfo; memset(&renderPassInfo,0,sizeof(renderPassInfo));
     renderPassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO;
     renderPassInfo.attachmentCount = sizeof(attachments)/sizeof(attachments[0]);
@@ -315,8 +330,6 @@ VkRenderPass lreCreateRenderPass(VkDevice device,VkPhysicalDevice physicalDevice
     renderPassInfo.pSubpasses = &subpass;
     renderPassInfo.dependencyCount = 1;
     renderPassInfo.pDependencies = &dependency;
-    
-
     
 
     VkRenderPass renderPass;
@@ -357,7 +370,7 @@ VkPipelineLayout lreCreateGraphicsPipelineLayout(VkDevice device,VkDescriptorSet
 
 // #include "lre_vertex.h"
 
-VkPipeline lreCreateGraphicsPipeline(VkDevice device,VkRenderPass renderPass,VkPipelineLayout pipelineLayout,LreVertexInputDescriptions* vertexInputDescriptions,const char* vertexFile,const char* fragFile) {
+VkPipeline lreCreateGraphicsPipeline(VkDevice device,VkPhysicalDevice physicalDevice,VkRenderPass renderPass,VkPipelineLayout pipelineLayout,LreVertexInputDescriptions* vertexInputDescriptions,const char* vertexFile,const char* fragFile) {
     ShaderCode vertex = readShader(vertexFile); 
     ShaderCode frag = readShader(fragFile);
 
@@ -410,7 +423,7 @@ VkPipeline lreCreateGraphicsPipeline(VkDevice device,VkRenderPass renderPass,VkP
     VkPipelineMultisampleStateCreateInfo multisampling; memset(&multisampling,0,sizeof(multisampling));
     multisampling.sType = VK_STRUCTURE_TYPE_PIPELINE_MULTISAMPLE_STATE_CREATE_INFO;
     multisampling.sampleShadingEnable = VK_FALSE;
-    multisampling.rasterizationSamples = VK_SAMPLE_COUNT_1_BIT;
+    multisampling.rasterizationSamples = lreGetMaxUsableSampleCount(physicalDevice);
 
     VkPipelineColorBlendAttachmentState colorBlendAttachment; memset(&colorBlendAttachment,0,sizeof(colorBlendAttachment));
     colorBlendAttachment.colorWriteMask = VK_COLOR_COMPONENT_R_BIT | VK_COLOR_COMPONENT_G_BIT | VK_COLOR_COMPONENT_B_BIT | VK_COLOR_COMPONENT_A_BIT;

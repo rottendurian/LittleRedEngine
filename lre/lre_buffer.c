@@ -109,7 +109,7 @@ LreBufferObject lreCreateBufferStaged(VkDevice device, VkPhysicalDevice physical
     return buffer;
 }
 
-LreTextureObject lreCreateTexture(VkDevice device,VkPhysicalDevice physicalDevice,VkImageCreateInfo imageInfo) {
+LreTextureObject lreCreateTexture(VkDevice device,VkPhysicalDevice physicalDevice,VkImageCreateInfo imageInfo,VkMemoryPropertyFlags memoryProperties) {
     LreTextureObject textureImage;
 
     if (vkCreateImage(device, &imageInfo, NULL, &textureImage.image) != VK_SUCCESS) {
@@ -122,7 +122,7 @@ LreTextureObject lreCreateTexture(VkDevice device,VkPhysicalDevice physicalDevic
     VkMemoryAllocateInfo allocInfo; memset(&allocInfo,0,sizeof(allocInfo));
     allocInfo.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
     allocInfo.allocationSize = memRequirements.size;
-    allocInfo.memoryTypeIndex = findMemoryType(memRequirements.memoryTypeBits, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,physicalDevice);
+    allocInfo.memoryTypeIndex = findMemoryType(memRequirements.memoryTypeBits, memoryProperties,physicalDevice);
 
     if (vkAllocateMemory(device, &allocInfo, NULL, &textureImage.memory) != VK_SUCCESS) {
         LOGTOFILE(LOG_LEVEL_ERROR,"failed to allocate image memory!");
@@ -353,10 +353,10 @@ LreTextureImageObject lreCreateTextureImage2D(VkDevice device,VkPhysicalDevice p
     
     imageInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
 
-    imageInfo.samples = VK_SAMPLE_COUNT_1_BIT;
+    imageInfo.samples = VK_SAMPLE_COUNT_1_BIT;//lreGetMaxUsableSampleCount(physicalDevice);
     imageInfo.flags = 0; // Optional
     
-    LreTextureObject textureObj = lreCreateTexture(device,physicalDevice,imageInfo);
+    LreTextureObject textureObj = lreCreateTexture(device,physicalDevice,imageInfo,VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
     LreTextureImageObject textureImage; //weirdchamp
     textureImage.image = textureObj.image;
     textureImage.memory = textureObj.memory;
@@ -507,11 +507,33 @@ LreTextureObject lreCreateDepthResources(VkDevice device,VkPhysicalDevice physic
     imageInfo.tiling = VK_IMAGE_TILING_OPTIMAL;
     imageInfo.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
     imageInfo.usage = VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT;
-    imageInfo.samples = VK_SAMPLE_COUNT_1_BIT;
+    imageInfo.samples = lreGetMaxUsableSampleCount(physicalDevice);
     imageInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
     
-    LreTextureObject textureObject = lreCreateTexture(device,physicalDevice,imageInfo);
+    LreTextureObject textureObject = lreCreateTexture(device,physicalDevice,imageInfo,VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
     textureObject.view = lreCreateImageView(device,textureObject.image,depthFormat,VK_IMAGE_VIEW_TYPE_2D,VK_IMAGE_ASPECT_DEPTH_BIT,1);
+    //maybe transition the image here
+    return textureObject;
+}
+
+LreTextureObject lreCreateColorResources(VkDevice device,VkPhysicalDevice physicalDevice,LreSwapChain swapChain) {
+    VkImageCreateInfo imageInfo; memset(&imageInfo,0,sizeof(imageInfo));
+    imageInfo.sType = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO;
+    imageInfo.imageType = VK_IMAGE_TYPE_2D;
+    imageInfo.extent.width = swapChain.extent.width;
+    imageInfo.extent.height = swapChain.extent.height;
+    imageInfo.extent.depth = 1;
+    imageInfo.mipLevels = 1;
+    imageInfo.arrayLayers = 1;
+    imageInfo.format = swapChain.surfaceFormat.format;
+    imageInfo.tiling = VK_IMAGE_TILING_OPTIMAL;
+    imageInfo.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
+    imageInfo.usage = VK_IMAGE_USAGE_TRANSIENT_ATTACHMENT_BIT | VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT;
+    imageInfo.samples = lreGetMaxUsableSampleCount(physicalDevice);
+    imageInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
+    
+    LreTextureObject textureObject = lreCreateTexture(device,physicalDevice,imageInfo,VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
+    textureObject.view = lreCreateImageView(device,textureObject.image,swapChain.surfaceFormat.format,VK_IMAGE_VIEW_TYPE_2D,VK_IMAGE_ASPECT_COLOR_BIT,1);
     //maybe transition the image here
     return textureObject;
 }

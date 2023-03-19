@@ -70,6 +70,7 @@ typedef struct LreSwapChainImages {
 } LreSwapChainImages;
 
 //pipeline
+
 typedef struct LreDescriptorPool {
     VkDescriptorSetLayout descriptorSetLayout;
     VkDescriptorPool descriptorPool;
@@ -83,28 +84,41 @@ typedef struct LreVertexInputDescriptions {
     uint32_t attributeDescriptionCount;
 } LreVertexInputDescriptions;
 
-//pipeline creation info
-typedef struct LrePushConstantInfo {
-    VkShaderStageFlags stageFlags;
-    uint32_t size;
-    void* data;
-} LrePushConstantInfo;
+typedef struct LrePipelineInfo {
+    //vertexInfo
+    const char* vertexShader;
+    
+    //fragInfo
+    const char* fragmentShader;
+    
+    //vertexInputInfo
+    LreVertexInputDescriptions vertexInputInfo;
+    
+    //input assembly
+    VkPrimitiveTopology topology;
 
-typedef struct LreDescriptorSetItem {
-    uint32_t binding;
-    uint32_t descriptorCount;
-    VkDescriptorType type;
-    VkShaderStageFlags stageFlags;
-    union {
-        LreTextureImageObject* textureImage;
-        LreUniformBufferObject* uniformBuffer;
-    };
-} LreDescriptorSetItem;
+    //rasterizer
+    VkPolygonMode polygonMode;
+    VkCullModeFlags cullMode;
+    VkFrontFace frontFace;
+    
+    //multisampling
+    VkSampleCountFlagBits msaaSamples;
+    //blending
 
-typedef struct LreDescriptorSetInfo {
-    LreDescriptorSetItem* items;
-    uint32_t itemCount;
-} LreDescriptorSetInfo;
+    //dynamic states
+    VkDynamicState* dynamicStates;
+    uint32_t dynamicStateCount;
+
+    //depthTest
+    VkBool32 enableDepthTest;
+
+    //pipeline layout
+    VkPipelineLayout pipelineLayout;
+    VkRenderPass renderPass;
+
+
+} LrePipelineInfo;
 
 //buffer
 typedef struct LreBufferObject {
@@ -168,6 +182,28 @@ typedef struct LreSynchronization {
     VkFence* inFlightFences;
 } LreSynchronization;
 
+//pipeline creation info
+typedef struct LrePushConstantInfo {
+    VkShaderStageFlags stageFlags;
+    uint32_t size;
+    void* data;
+} LrePushConstantInfo;
+
+typedef struct LreDescriptorSetItem {
+    uint32_t binding;
+    uint32_t descriptorCount;
+    VkDescriptorType type;
+    VkShaderStageFlags stageFlags;
+    union {
+        LreTextureImageObject* textureImage;
+        LreUniformBufferObject* uniformBuffer;
+    };
+} LreDescriptorSetItem;
+
+typedef struct LreDescriptorSetInfo {
+    LreDescriptorSetItem* items;
+    uint32_t itemCount;
+} LreDescriptorSetInfo;
 
 //objects
 typedef struct LreInstanceObject {
@@ -177,6 +213,9 @@ typedef struct LreInstanceObject {
     VkSurfaceKHR surface;
     VkPhysicalDevice physicalDevice;
     VkDevice device;
+
+    QueueFamilyIndices indicesStatic;
+    VkSampleCountFlagBits maxMssa;
 } LreInstanceObject;
 
 typedef struct LreRenderObject {
@@ -191,6 +230,7 @@ typedef struct LreSwapChainObject {
     LreSwapChain swapChain;
     LreSwapChainImages swapChainImages;
     LreTextureObject depthImage;
+    LreTextureObject colorImage; //msaa
 } LreSwapChainObject;
 
 typedef struct LrePipelineObject {
@@ -208,12 +248,12 @@ typedef struct LrePipelineObject {
 
 } LrePipelineObject;
 
-typedef struct LreVulkanObject {
-    LreInstanceObject instance;
-    LreRenderObject render;
-    LreSwapChainObject swapChain;
-    LrePipelineObject pipeline;
-} LreVulkanObject;
+// typedef struct LreVulkanObject {
+//     LreInstanceObject instance;
+//     LreRenderObject render;
+//     LreSwapChainObject swapChain;
+//     LrePipelineObject pipeline;
+// } LreVulkanObject;
 
 //vulkan object
 typedef struct LreVulkanObject {
@@ -231,6 +271,7 @@ typedef struct LreVulkanObject {
     VkPipelineLayout pipelineLayout;
     VkPipeline graphicsPipeline;
     LreTextureObject depthImage;
+    LreTextureObject colorImage; //msaa
     LreFrameBuffer frameBuffer;
     VkCommandPool commandPool;
     VkCommandBuffer* commandBuffer;
